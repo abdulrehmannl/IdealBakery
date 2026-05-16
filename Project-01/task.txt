@@ -1,0 +1,48 @@
+REST API - JSON
+we are designing the REST API in ehich we will support JSON data
+We will deal with users by:
+If we do get request on, it will do this:
+
+GET /users - List all the users
+Get /users/1 - Get the user with id 1
+Get /users/2 - Get the user with id 2
+
+POST /users - Create New user
+
+PATCH /user/1(id) - Edit the user with ID 1
+
+DELETE /user/1(id) - DELETE the user with ID 1
+
+Now We Need Data (In JSON format but for pactice we will not use mongoDB instead we will use mockaroo.com to generate fake data)
+After adding data file and adding on the index.js file, add first route 
+to get all the users
+Then start the server and go to local host on browser
+
+
+
+
+
+
+there is no such thing like Get /users/1 - Get the user with id 1
+and we need a dynamic way to do this, so here it is:
+Get /users/:id   -   here : means we can put anything here it is veriable
+
+Now Move toward POST request:
+But the issue is that browser cannot poossess the post request, tthey only deal in GET
+POOOST, PATTTCH, DELETE - proobalematic 
+so we will use POSTMAN too solve this problem
+POSTMAN - is a tool that help us ttesting APIs and documentation
+
+
+Now to use POST;
+we added a new user in the data and then tried to fetch it but it gave us undefined cause express does not know
+how to process data, so for that we will use Middleware
+MiddleWare:
+Now go and add middleware before routes:
+// Middleware - plugin
+app.use(express.urlencoded({ extended: flase }))
+it eill add form data to body.
+
+This plugin will pick my data, will make its Js model and put it into my request.body()
+we can use body to add data into our moc data
+now we will do this after our body code;

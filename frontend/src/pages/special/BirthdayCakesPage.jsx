@@ -1,0 +1,266 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Phone, MessageCircle, ChevronRight, Clock, Star } from 'lucide-react';
+import ProductCard from '../../components/shared/ProductCard';
+
+/**
+ * BirthdayCakesPage
+ * =================
+ * Dedicated page for custom birthday cake orders.
+ * Shows:
+ *   1. Hero banner with how-to-order info
+ *   2. Grid of birthday cake options (product cards)
+ *   3. How-to-order steps section
+ *
+ * Route: /special/birthday-cakes
+ */
+function BirthdayCakesPage() {
+
+    /*
+     * DUMMY PRODUCT DATA — BIRTHDAY CAKES
+     * --------------------------------------
+     * TODO (Future API): Replace with GET /api/products?tags=birthday-cake
+     * or a dedicated specialOrders API endpoint.
+     */
+    const cakes = [
+        {
+            id: 1,
+            name: 'Classic Chocolate Birthday Cake',
+            description: '2-tiered moist chocolate sponge with chocolate ganache and fondant roses.',
+            price: 'From Rs. 2500',
+            image: 'https://images.unsplash.com/photo-1558301211-0d8c8ddee6ec?auto=format&fit=contain&w=500&q=80',
+            badge: 'BESTSELLER',
+        },
+        {
+            id: 2,
+            name: 'Red Velvet Dream',
+            description: 'Elegant red velvet layers with cream cheese frosting and edible glitter.',
+            price: 'From Rs. 2800',
+            image: 'https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?auto=format&fit=contain&w=500&q=80',
+            badge: 'CUSTOMER FAV',
+        },
+        {
+            id: 3,
+            name: 'Vanilla Rainbow Cake',
+            description: 'Colorful layered vanilla cake — perfect for kids\' birthday parties.',
+            price: 'From Rs. 2200',
+            image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=contain&w=500&q=80',
+            badge: null,
+        },
+        {
+            id: 4,
+            name: 'Floral Fondant Cake',
+            description: 'Smooth fondant-finished cake with handcrafted sugar flowers. Fully custom.',
+            price: 'From Rs. 3500',
+            image: 'https://images.unsplash.com/photo-1542826438-bd32f43d626f?auto=format&fit=contain&w=500&q=80',
+            badge: 'PREMIUM',
+        },
+        {
+            id: 5,
+            name: 'Black Forest Birthday Cake',
+            description: 'Classic black forest with dark cherries, whipped cream, and chocolate shavings.',
+            price: 'From Rs. 2600',
+            image: 'https://images.unsplash.com/photo-1587248720327-8eb72564be1e?auto=format&fit=contain&w=500&q=80',
+            badge: null,
+        },
+        {
+            id: 6,
+            name: 'Caramel Drip Cake',
+            description: 'Trendy drip-cake design with salted caramel filling and buttercream swirls.',
+            price: 'From Rs. 3200',
+            image: 'https://images.unsplash.com/photo-1571115177098-24ec42ed204d?auto=format&fit=contain&w=500&q=80',
+            badge: 'NEW',
+        },
+        {
+            id: 7,
+            name: 'Kids Theme Cake',
+            description: 'Custom theme cake (cartoon, princess, superhero) with edible photo print.',
+            price: 'From Rs. 2800',
+            image: 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?auto=format&fit=contain&w=500&q=80',
+            badge: null,
+        },
+        {
+            id: 8,
+            name: 'Number Cream Cake',
+            description: 'Chic number-shaped cake decorated with macarons, donuts, and fresh flowers.',
+            price: 'From Rs. 4000',
+            image: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?auto=format&fit=contain&w=500&q=80',
+            badge: 'TRENDING',
+        },
+    ];
+
+    /*
+     * How-to-order steps — shown as a simple 3-step guide below the product grid.
+     * These steps explain the custom order process to the customer.
+     */
+    const steps = [
+        {
+            step: '01',
+            title: 'Choose Your Design',
+            description: 'Browse our designs above or describe your idea over WhatsApp.'
+        },
+        {
+            step: '02',
+            title: 'Place Your Order',
+            description: 'Call us or WhatsApp at least 24 hours before your event.'
+        },
+        {
+            step: '03',
+            title: 'We Bake & Deliver',
+            description: 'We bake fresh and deliver on your chosen date — right on time.'
+        },
+    ];
+
+    return (
+        <div className="min-h-screen font-body" style={{ backgroundColor: '#F5F0EB' }}>
+
+            {/* ══════════════════════════════════════════
+                SECTION 1: HERO BANNER
+            ══════════════════════════════════════════ */}
+            <div
+                className="relative bg-primary text-white py-20 px-8 text-center overflow-hidden"
+                style={{
+                    backgroundImage: 'url(https://images.unsplash.com/photo-1558301211-0d8c8ddee6ec?auto=format&fit=crop&w=1400&q=80)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                }}
+            >
+                {/* Dark overlay for readability */}
+                <div className="absolute inset-0 bg-primary/85 z-0" />
+
+                <div className="relative z-10">
+                    {/* Breadcrumb */}
+                    <div className="flex items-center justify-center gap-2 text-white/60 text-sm mb-5">
+                        <Link to="/" className="hover:text-white transition-colors">Home</Link>
+                        <ChevronRight size={14} />
+                        <Link to="/menu" className="hover:text-white transition-colors">Menu</Link>
+                        <ChevronRight size={14} />
+                        <span className="text-white font-semibold">Birthday Cakes</span>
+                    </div>
+
+                    {/* Title */}
+                    <h1 className="font-heading text-4xl md:text-5xl font-bold mb-4">
+                        🎂 Birthday Cakes
+                    </h1>
+                    <div className="w-16 h-1 bg-white/50 mx-auto mb-5 rounded-full" />
+                    <p className="font-body text-white/85 max-w-lg mx-auto text-lg mb-8">
+                        Custom-designed cakes made for your special day. Every cake is baked fresh and decorated by hand.
+                    </p>
+
+                    {/* Quick Contact Buttons */}
+                    <div className="flex flex-wrap gap-4 justify-center">
+                        {/* Call button */}
+                        <a
+                            href="tel:03234404773"
+                            className="flex items-center gap-2 bg-white text-primary px-6 py-3 rounded font-bold text-sm tracking-widest hover:bg-secondary transition-colors shadow-lg"
+                        >
+                            <Phone size={16} />
+                            CALL TO ORDER
+                        </a>
+                        {/* WhatsApp button */}
+                        <a
+                            href="https://wa.me/923234404773"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 bg-[#25D366] text-white px-6 py-3 rounded font-bold text-sm tracking-widest hover:bg-[#1EBE5B] transition-colors shadow-lg"
+                        >
+                            <MessageCircle size={16} />
+                            WHATSAPP US
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {/* ══════════════════════════════════════════
+                SECTION 2: NOTICE BAR
+                Minimum order lead time notice
+            ══════════════════════════════════════════ */}
+            <div className="bg-[#1A1A1A] text-white py-3 px-8 text-center flex items-center justify-center gap-3">
+                <Clock size={16} className="text-white/70 shrink-0" />
+                <p className="font-body text-sm font-semibold tracking-wide">
+                    Custom cake orders require <span className="text-secondary font-bold">at least 24 hours</span> advance notice. Call us to confirm availability.
+                </p>
+            </div>
+
+            {/* ══════════════════════════════════════════
+                SECTION 3: CAKE OPTIONS GRID
+            ══════════════════════════════════════════ */}
+            <section className="py-16 px-6 md:px-8">
+                <div className="max-w-7xl mx-auto">
+                    <div className="text-center mb-12">
+                        <h2 className="font-heading text-3xl font-bold text-text-dark">
+                            Our Birthday Cake Designs
+                        </h2>
+                        <div className="w-12 h-1 bg-primary mx-auto mt-4 rounded-full" />
+                        <p className="font-body text-text-light mt-4 text-sm">
+                            All cakes fully customizable — flavors, colors, size, and message.
+                        </p>
+                    </div>
+
+                    {/*
+                        Product grid — same 4-col responsive grid as category pages.
+                        Uses the shared ProductCard component.
+                    */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch">
+                        {cakes.map((cake) => (
+                            <ProductCard key={cake.id} product={cake} />
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ══════════════════════════════════════════
+                SECTION 4: HOW TO ORDER — 3 STEPS
+            ══════════════════════════════════════════ */}
+            <section className="bg-primary text-white py-16 px-8">
+                <div className="max-w-5xl mx-auto">
+                    <div className="text-center mb-12">
+                        <h2 className="font-heading text-3xl font-bold mb-4">How to Place a Custom Order</h2>
+                        <div className="w-12 h-1 bg-white/40 mx-auto rounded-full" />
+                    </div>
+
+                    {/* 3-column step grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
+                        {steps.map((item) => (
+                            <div key={item.step} className="flex flex-col items-center">
+                                {/* Step number in a circle */}
+                                <div className="w-16 h-16 rounded-full border-2 border-white/50 flex items-center justify-center mb-5">
+                                    <span className="font-heading text-2xl font-bold text-white">{item.step}</span>
+                                </div>
+                                <h3 className="font-heading text-xl font-bold mb-3">{item.title}</h3>
+                                <p className="font-body text-white/75 text-sm leading-relaxed">{item.description}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Back to Menu */}
+            <div className="py-10 text-center" style={{ backgroundColor: '#F5F0EB' }}>
+                <Link
+                    to="/menu"
+                    className="inline-block border-2 border-primary text-primary px-8 py-3 rounded font-bold text-sm tracking-widest hover:bg-primary hover:text-white transition-colors"
+                >
+                    ← BACK TO FULL MENU
+                </Link>
+            </div>
+
+        </div>
+    );
+}
+
+export default BirthdayCakesPage;
+
+/*
+ * END OF FILE SUMMARY
+ * =====================
+ * 1. Concepts used:
+ *    - Full special-order page with hero, notice bar, product grid, and how-to-order steps.
+ *    - <a href="tel:..."> for direct phone calling from mobile.
+ *    - <a href="https://wa.me/..."> WhatsApp deep link.
+ * 2. Dummy Data:
+ *    - 8 birthday cake products with "From Rs. X" pricing.
+ *    - Phone number: 0323 4404773 (from the Branches data on homepage).
+ * 3. Route: /special/birthday-cakes
+ * 4. Future API: GET /api/products?tags=birthday or POST /api/orders for placing orders.
+ */
