@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
-import ProductCard from '../shared/ProductCard';
+import ProductCard from './ProductCard';
 
 /**
  * CategoryPageLayout Component (Shared Layout for all 6 category pages)
