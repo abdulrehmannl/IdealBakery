@@ -5,7 +5,7 @@
  *   name        String   required
  *   email       String   required unique
  *   phone       String   required
- *   role        enum: chef|cashier|manager|delivery|cleaner|waiter  required
+ *   role        enum: manager|staff|delivery  required
  *   salary      Number   required
  *   branch      ObjectId ref:Branch  required
  *   joiningDate Date     default:now
@@ -13,7 +13,7 @@
  *   address     String   optional
  *
  * Note: Staff are NOT User accounts — they are employee records.
- * A cashier in the staff table is a real employee; a User with role:cashier
+ * A staff in the staff table is a real employee; a User with role:staff
  * is the login account for app access. They can be linked later if needed.
  */
 
@@ -26,7 +26,7 @@ const Staff = require('../models/Staff');
  * @desc  Get all staff members
  * @route GET /api/staff
  * @access Private — Admin/Manager
- * Filters: ?branch=id  ?role=chef  ?isActive=true
+ * Filters: ?branch=id  ?role=staff  ?isActive=true
  */
 const getAllStaff = async (req, res, next) => {
     try {

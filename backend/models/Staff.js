@@ -5,7 +5,7 @@ const staffSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true },
-  role: { type: String, enum: ['chef', 'cashier', 'manager', 'delivery', 'cleaner', 'waiter'], required: true },
+  role: { type: String, enum: ['manager', 'staff', 'delivery'], required: true },
   salary: { type: Number, required: true },
   branch: {
     type: mongoose.Schema.Types.ObjectId,

@@ -33,6 +33,16 @@ const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 // Global error handler — catches any error passed via next(error) from routes.
 
+// ── Security Middleware ──
+const helmet        = require('helmet');
+// helmet: Sets secure HTTP response headers to protect against common web vulnerabilities.
+
+
+
+const cookieParser  = require('cookie-parser');
+// cookie-parser: Parses Cookie header and populates req.cookies.
+// Required so auth middleware can read req.cookies.token for httpOnly JWT.
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. ROUTE IMPORTS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -48,18 +58,19 @@ const errorHandler = require('./middleware/errorHandler');
 const authRoutes      = require('./routes/authRoutes');       // ✅ /api/auth
 const productRoutes   = require('./routes/productRoutes');    // ✅ /api/products
 const categoryRoutes  = require('./routes/categoryRoutes');   // ✅ /api/categories
-// const orderRoutes     = require('./routes/orderRoutes');    // ⏳ /api/orders
-// const staffRoutes     = require('./routes/staffRoutes');    // ⏳ /api/staff
+const userRoutes      = require('./routes/userRoutes');       // ✅ /api/users  (internal user mgmt)
+const orderRoutes     = require('./routes/orderRoutes');    // ✅ /api/orders
+const staffRoutes     = require('./routes/staffRoutes');    // ✅ /api/staff
 const branchRoutes    = require('./routes/branchRoutes');     // ✅ /api/branches
-// const inventoryRoutes = require('./routes/inventoryRoutes');// ⏳ /api/inventory
-// const attendanceRoutes= require('./routes/attendanceRoutes');// ⏳ /api/attendance
-// const salaryRoutes    = require('./routes/salaryRoutes');   // ⏳ /api/salaries
-// const counterRoutes   = require('./routes/counterRoutes');  // ⏳ /api/counter
-// const discountRoutes  = require('./routes/discountRoutes'); // ⏳ /api/discounts
-// const reportRoutes    = require('./routes/reportRoutes');   // ⏳ /api/reports
-// const leaveRoutes     = require('./routes/leaveRoutes');    // ⏳ /api/leaves
-// const expenseRoutes   = require('./routes/expenseRoutes');  // ⏳ /api/expenses
-// const machineryRoutes = require('./routes/machineryRoutes');// ⏳ /api/machinery
+const inventoryRoutes = require('./routes/inventoryRoutes');// ✅ /api/inventory
+const attendanceRoutes= require('./routes/attendanceRoutes');// ✅ /api/attendance
+const salaryRoutes    = require('./routes/salaryRoutes');   // ✅ /api/salaries
+const counterRoutes   = require('./routes/counterRoutes');  // ✅ /api/counter
+const discountRoutes  = require('./routes/discountRoutes'); // ✅ /api/discounts
+const reportRoutes    = require('./routes/reportRoutes');   // ✅ /api/reports
+const leaveRoutes     = require('./routes/leaveRoutes');    // ✅ /api/leaves
+const expenseRoutes   = require('./routes/expenseRoutes');  // ✅ /api/expenses
+const machineryRoutes = require('./routes/machineryRoutes');// ✅ /api/machinery
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 3. CREATE EXPRESS APP
@@ -85,22 +96,34 @@ connectDB();
 
 // ── 5a. CORS (Cross-Origin Resource Sharing) ──
 app.use(cors({
-    origin: 'http://localhost:5173',
-    // ONLY allow requests from our React frontend (Vite dev server).
-    // In production this would be your real domain e.g. 'https://idealbakery.pk'
+    origin: process.env.FRONTEND_URL,
+    // Reads the allowed origin from .env — works for both local dev and production.
+    // Local:      FRONTEND_URL=http://localhost:5173
+    // Production: FRONTEND_URL=https://your-app.vercel.app
 
     credentials: true,
     // Allows the frontend to send cookies and Authorization headers.
-    // Required for JWT token authentication to work properly.
+    // Required for httpOnly JWT cookie authentication to work properly.
 }));
 
-// ── 5b. JSON Body Parser ──
+// ── 5b. Helmet — secure HTTP headers ──
+app.use(helmet());
+// Sets 15+ security-related HTTP response headers automatically.
+// Protects against clickjacking, MIME sniffing, XSS via headers, etc.
+
+
+
+// ── 5e. Cookie Parser — read cookies from requests ──
+app.use(cookieParser());
+// Parses the Cookie header and populates req.cookies.
+// Required for auth middleware to read req.cookies.token (httpOnly JWT).
+
+// ── 5f. JSON Body Parser ──
 app.use(express.json());
 // Parses incoming request bodies that have Content-Type: application/json
 // Without this, req.body would be undefined when frontend sends JSON data.
-// Example: A POST /api/auth/register sends { name, email, password } as JSON.
 
-// ── 5c. URL-Encoded Body Parser ──
+// ── 5g. URL-Encoded Body Parser ──
 app.use(express.urlencoded({ extended: true }));
 // Parses incoming requests with URL-encoded bodies (HTML form submissions).
 // extended: true allows for rich objects and arrays to be encoded.
@@ -134,17 +157,18 @@ app.use('/api/auth',       authRoutes);        // ✅ Register & Login
 app.use('/api/products',   productRoutes);    // ✅ Products CRUD
 app.use('/api/categories', categoryRoutes);   // ✅ Categories CRUD
 app.use('/api/branches',   branchRoutes);     // ✅ Branches CRUD
-// app.use('/api/orders',     orderRoutes);    // ⏳ Uncomment when built
-// app.use('/api/staff',      staffRoutes);    // ⏳ Uncomment when built
-// app.use('/api/inventory',  inventoryRoutes);// ⏳ Uncomment when built
-// app.use('/api/attendance', attendanceRoutes);// ⏳ Uncomment when built
-// app.use('/api/salaries',   salaryRoutes);   // ⏳ Uncomment when built
-// app.use('/api/counter',    counterRoutes);  // ⏳ Uncomment when built
-// app.use('/api/discounts',  discountRoutes); // ⏳ Uncomment when built
-// app.use('/api/reports',    reportRoutes);   // ⏳ Uncomment when built
-// app.use('/api/leaves',     leaveRoutes);    // ⏳ Uncomment when built
-// app.use('/api/expenses',   expenseRoutes);  // ⏳ Uncomment when built
-// app.use('/api/machinery',  machineryRoutes);// ⏳ Uncomment when built
+app.use('/api/users',      userRoutes);       // ✅ Internal User Management (admin only)
+app.use('/api/orders',     orderRoutes);    // ✅
+app.use('/api/staff',      staffRoutes);    // ✅
+app.use('/api/inventory',  inventoryRoutes);// ✅
+app.use('/api/attendance', attendanceRoutes);// ✅
+app.use('/api/salaries',   salaryRoutes);   // ✅
+app.use('/api/counter',    counterRoutes);  // ✅
+app.use('/api/discounts',  discountRoutes); // ✅
+app.use('/api/reports',    reportRoutes);   // ✅
+app.use('/api/leaves',     leaveRoutes);    // ✅
+app.use('/api/expenses',   expenseRoutes);  // ✅
+app.use('/api/machinery',  machineryRoutes);// ✅
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 8. 404 HANDLER

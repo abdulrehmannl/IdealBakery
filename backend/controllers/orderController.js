@@ -244,11 +244,69 @@ const deleteOrder = async (req, res, next) => {
         await OrderItem.deleteMany({ order: req.params.id });
 
         return res.status(200).json({ success: true, message: 'Order deleted.', data: null });
-
     } catch (error) { next(error); }
 };
 
-module.exports = { createOrder, getAllOrders, getSingleOrder, updateOrderStatus, deleteOrder };
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTROLLER 6: trackOrder (Public)
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * @desc    Track order publicly using order ID and phone number
+ * @route   GET /api/orders/track
+ * @access  Public
+ */
+const trackOrder = async (req, res, next) => {
+    try {
+        const { orderId, phone } = req.query;
+        if (!orderId || !phone) {
+            return res.status(400).json({ success: false, message: 'Order ID and phone number are required.' });
+        }
+
+        const order = await Order.findById(orderId)
+            .populate('customer', 'name email phone')
+            .populate('branch', 'name city address');
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found.' });
+        }
+
+        if (order.phone !== phone) {
+            return res.status(401).json({ success: false, message: 'Phone number does not match this order.' });
+        }
+
+        const items = await OrderItem.find({ order: order._id })
+            .populate('product', 'name price image');
+
+        return res.status(200).json({ success: true, data: { order, items } });
+    } catch (error) {
+        next(error);
+    }
+};
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTROLLER 7: getMyOrders (Logged-in customer)
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * @desc    Get logged in user orders
+ * @route   GET /api/orders/my-orders
+ * @access  Private (Any logged-in user)
+ */
+const getMyOrders = async (req, res, next) => {
+    try {
+        const orders = await Order.find({ customer: req.user._id }).sort('-createdAt');
+        
+        // Fetch items for each order to build a comprehensive view
+        const ordersWithItems = await Promise.all(orders.map(async (order) => {
+            const items = await OrderItem.find({ order: order._id }).populate('product', 'name price image');
+            return { ...order.toObject(), items };
+        }));
+
+        return res.status(200).json({ success: true, count: ordersWithItems.length, data: ordersWithItems });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { createOrder, getAllOrders, getSingleOrder, updateOrderStatus, deleteOrder, trackOrder, getMyOrders };
 
 /*
  * END OF FILE SUMMARY

@@ -57,10 +57,16 @@ const getAllProducts = async (req, res, next) => {
         // and add conditions based on what the client sends.
         const filter = {};
 
-        // Filter by category ObjectId
+        // Filter by category ObjectId or Name
         if (req.query.category) {
-            filter.category = req.query.category;
-            // MongoDB compares: product.category === ObjectId("64abc...")
+            if (req.query.category.match(/^[0-9a-fA-F]{24}$/)) {
+                filter.category = req.query.category;
+            } else {
+                const Category = require('../models/Category');
+                const cat = await Category.findOne({ name: { $regex: new RegExp(`^${req.query.category}$`, 'i') } });
+                if (cat) filter.category = cat._id;
+                else filter.category = null; // force empty result if category name not found
+            }
         }
 
         // Filter by branch ObjectId
@@ -91,7 +97,8 @@ const getAllProducts = async (req, res, next) => {
         const products = await Product.find(filter)
             .populate('category', 'name description')
             .populate('branch',   'name city address')
-            .sort({ createdAt: -1 }); // newest first
+            .sort({ createdAt: -1 }) // newest first
+            .limit(100);             // cap results to prevent overloading the server
 
         return res.status(200).json({
             success: true,

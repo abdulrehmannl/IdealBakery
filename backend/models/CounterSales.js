@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const counterSalesSchema = new mongoose.Schema({
 
   branch: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch', required: true },
-  cashier: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', required: true },
+  staff: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', required: true },
   items: [
     {
       product: { 

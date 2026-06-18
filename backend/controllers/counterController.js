@@ -3,7 +3,7 @@
  * ================================================================
  * COUNTER SALES SCHEMA RECAP:
  *   branch        ObjectId ref:Branch  required
- *   cashier       ObjectId ref:Staff   required
+ *   staff         ObjectId ref:Staff   required
  *   items         Array of:
  *     product     ObjectId ref:Product  required
  *     quantity    Number min:1          required
@@ -16,19 +16,19 @@
  *
  * Counter Sales = walk-in sales at the physical bakery counter.
  * Different from online Orders — no delivery address needed.
- * The cashier records who bought what, how much, and how they paid.
+ * The staff member records who bought what, how much, and how they paid.
  */
 
 const CounterSales = require('../models/CounterSales');
 
 // GET all counter sales — Admin/Manager
-// Filters: ?branch=id  ?cashier=id  ?paymentMethod=cash
+// Filters: ?branch=id  ?staff=id  ?paymentMethod=cash
 // Date range: ?dateFrom=2026-04-01&dateTo=2026-04-30
 const getAllCounterSales = async (req, res, next) => {
     try {
         const filter = {};
         if (req.query.branch)        filter.branch        = req.query.branch;
-        if (req.query.cashier)       filter.cashier       = req.query.cashier;
+        if (req.query.staff)         filter.staff         = req.query.staff;
         if (req.query.paymentMethod) filter.paymentMethod = req.query.paymentMethod;
 
         if (req.query.dateFrom || req.query.dateTo) {
@@ -39,7 +39,7 @@ const getAllCounterSales = async (req, res, next) => {
 
         const sales = await CounterSales.find(filter)
             .populate('branch',  'name city')
-            .populate('cashier', 'name role')
+            .populate('staff', 'name role')
             .populate('items.product', 'name price')
             .sort({ saleDate: -1 });
 
@@ -55,7 +55,7 @@ const getSingleCounterSale = async (req, res, next) => {
     try {
         const sale = await CounterSales.findById(req.params.id)
             .populate('branch',  'name city address')
-            .populate('cashier', 'name role phone')
+            .populate('staff', 'name role phone')
             .populate('items.product', 'name price image');
         if (!sale)
             return res.status(404).json({ success: false, message: 'Counter sale not found.' });
@@ -63,14 +63,14 @@ const getSingleCounterSale = async (req, res, next) => {
     } catch (error) { next(error); }
 };
 
-// POST record a new counter sale — Admin/Manager (or cashier role later)
+// POST record a new counter sale — Admin/Manager (or staff role later)
 const createCounterSale = async (req, res, next) => {
     try {
-        const { branch, cashier, items, customerName, totalAmount, paymentMethod, notes, saleDate } = req.body;
+        const { branch, staff, items, customerName, totalAmount, paymentMethod, notes, saleDate } = req.body;
 
         const missing = [];
         if (!branch)        missing.push('branch');
-        if (!cashier)       missing.push('cashier');
+        if (!staff)         missing.push('staff');
         if (!totalAmount)   missing.push('totalAmount');
         if (!paymentMethod) missing.push('paymentMethod');
         if (!items || !Array.isArray(items) || items.length === 0)
@@ -86,12 +86,12 @@ const createCounterSale = async (req, res, next) => {
         }
 
         const sale = await CounterSales.create({
-            branch, cashier, items, customerName, totalAmount, paymentMethod, notes,
+            branch, staff, items, customerName, totalAmount, paymentMethod, notes,
             saleDate: saleDate || Date.now(),
         });
 
         const populated = await CounterSales.findById(sale._id)
-            .populate('branch', 'name').populate('cashier', 'name role')
+            .populate('branch', 'name').populate('staff', 'name role')
             .populate('items.product', 'name price');
 
         return res.status(201).json({ success: true, message: 'Counter sale recorded.', data: populated });
@@ -109,7 +109,7 @@ const updateCounterSale = async (req, res, next) => {
         if (notes         !== undefined) updateData.notes         = notes;
 
         const sale = await CounterSales.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true })
-            .populate('branch', 'name').populate('cashier', 'name role');
+            .populate('branch', 'name').populate('staff', 'name role');
         if (!sale)
             return res.status(404).json({ success: false, message: 'Counter sale not found.' });
         return res.status(200).json({ success: true, message: 'Counter sale updated.', data: sale });
@@ -131,7 +131,7 @@ module.exports = { getAllCounterSales, getSingleCounterSale, createCounterSale, 
 /*
  * END OF FILE SUMMARY
  * File: controllers/counterController.js
- * GET    /api/counter       → getAllCounterSales (?branch ?cashier ?paymentMethod ?dateFrom ?dateTo)
+ * GET    /api/counter       → getAllCounterSales (?branch ?staff ?paymentMethod ?dateFrom ?dateTo)
  *                             Returns totalRevenue in response
  * GET    /api/counter/:id   → getSingleCounterSale (full item detail with product populate)
  * POST   /api/counter       → createCounterSale (validates each item has product+qty+price)
