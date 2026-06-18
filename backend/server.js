@@ -22,7 +22,7 @@ const cors = require('cors');
 // port 5173) to communicate with this backend (running on port 5000).
 // Without this, the browser will BLOCK all requests from the frontend.
 
-require('dotenv').config();
+require('dotenv').config({ silent: true });
 // dotenv: Reads the .env file and loads its values into process.env
 // This must be called BEFORE we access any process.env variables like PORT.
 
@@ -34,12 +34,12 @@ const errorHandler = require('./middleware/errorHandler');
 // Global error handler — catches any error passed via next(error) from routes.
 
 // ── Security Middleware ──
-const helmet        = require('helmet');
+const helmet = require('helmet');
 // helmet: Sets secure HTTP response headers to protect against common web vulnerabilities.
 
 
 
-const cookieParser  = require('cookie-parser');
+const cookieParser = require('cookie-parser');
 // cookie-parser: Parses Cookie header and populates req.cookies.
 // Required so auth middleware can read req.cookies.token for httpOnly JWT.
 
@@ -55,21 +55,21 @@ const cookieParser  = require('cookie-parser');
 // ✅ = Active (file exists)
 // ⏳ = Coming soon (file not built yet)
 
-const authRoutes      = require('./routes/authRoutes');       // ✅ /api/auth
-const productRoutes   = require('./routes/productRoutes');    // ✅ /api/products
-const categoryRoutes  = require('./routes/categoryRoutes');   // ✅ /api/categories
-const userRoutes      = require('./routes/userRoutes');       // ✅ /api/users  (internal user mgmt)
-const orderRoutes     = require('./routes/orderRoutes');    // ✅ /api/orders
-const staffRoutes     = require('./routes/staffRoutes');    // ✅ /api/staff
-const branchRoutes    = require('./routes/branchRoutes');     // ✅ /api/branches
+const authRoutes = require('./routes/authRoutes');       // ✅ /api/auth
+const productRoutes = require('./routes/productRoutes');    // ✅ /api/products
+const categoryRoutes = require('./routes/categoryRoutes');   // ✅ /api/categories
+const userRoutes = require('./routes/userRoutes');       // ✅ /api/users  (internal user mgmt)
+const orderRoutes = require('./routes/orderRoutes');    // ✅ /api/orders
+const staffRoutes = require('./routes/staffRoutes');    // ✅ /api/staff
+const branchRoutes = require('./routes/branchRoutes');     // ✅ /api/branches
 const inventoryRoutes = require('./routes/inventoryRoutes');// ✅ /api/inventory
-const attendanceRoutes= require('./routes/attendanceRoutes');// ✅ /api/attendance
-const salaryRoutes    = require('./routes/salaryRoutes');   // ✅ /api/salaries
-const counterRoutes   = require('./routes/counterRoutes');  // ✅ /api/counter
-const discountRoutes  = require('./routes/discountRoutes'); // ✅ /api/discounts
-const reportRoutes    = require('./routes/reportRoutes');   // ✅ /api/reports
-const leaveRoutes     = require('./routes/leaveRoutes');    // ✅ /api/leaves
-const expenseRoutes   = require('./routes/expenseRoutes');  // ✅ /api/expenses
+const attendanceRoutes = require('./routes/attendanceRoutes');// ✅ /api/attendance
+const salaryRoutes = require('./routes/salaryRoutes');   // ✅ /api/salaries
+const counterRoutes = require('./routes/counterRoutes');  // ✅ /api/counter
+const discountRoutes = require('./routes/discountRoutes'); // ✅ /api/discounts
+const reportRoutes = require('./routes/reportRoutes');   // ✅ /api/reports
+const leaveRoutes = require('./routes/leaveRoutes');    // ✅ /api/leaves
+const expenseRoutes = require('./routes/expenseRoutes');  // ✅ /api/expenses
 const machineryRoutes = require('./routes/machineryRoutes');// ✅ /api/machinery
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -153,22 +153,22 @@ app.get('/', (req, res) => {
 //     POST /api/auth/register → authRoutes handles "/register"
 //     POST /api/auth/login    → authRoutes handles "/login"
 
-app.use('/api/auth',       authRoutes);        // ✅ Register & Login
-app.use('/api/products',   productRoutes);    // ✅ Products CRUD
+app.use('/api/auth', authRoutes);        // ✅ Register & Login
+app.use('/api/products', productRoutes);    // ✅ Products CRUD
 app.use('/api/categories', categoryRoutes);   // ✅ Categories CRUD
-app.use('/api/branches',   branchRoutes);     // ✅ Branches CRUD
-app.use('/api/users',      userRoutes);       // ✅ Internal User Management (admin only)
-app.use('/api/orders',     orderRoutes);    // ✅
-app.use('/api/staff',      staffRoutes);    // ✅
-app.use('/api/inventory',  inventoryRoutes);// ✅
+app.use('/api/branches', branchRoutes);     // ✅ Branches CRUD
+app.use('/api/users', userRoutes);       // ✅ Internal User Management (admin only)
+app.use('/api/orders', orderRoutes);    // ✅
+app.use('/api/staff', staffRoutes);    // ✅
+app.use('/api/inventory', inventoryRoutes);// ✅
 app.use('/api/attendance', attendanceRoutes);// ✅
-app.use('/api/salaries',   salaryRoutes);   // ✅
-app.use('/api/counter',    counterRoutes);  // ✅
-app.use('/api/discounts',  discountRoutes); // ✅
-app.use('/api/reports',    reportRoutes);   // ✅
-app.use('/api/leaves',     leaveRoutes);    // ✅
-app.use('/api/expenses',   expenseRoutes);  // ✅
-app.use('/api/machinery',  machineryRoutes);// ✅
+app.use('/api/salaries', salaryRoutes);   // ✅
+app.use('/api/counter', counterRoutes);  // ✅
+app.use('/api/discounts', discountRoutes); // ✅
+app.use('/api/reports', reportRoutes);   // ✅
+app.use('/api/leaves', leaveRoutes);    // ✅
+app.use('/api/expenses', expenseRoutes);  // ✅
+app.use('/api/machinery', machineryRoutes);// ✅
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 8. 404 HANDLER
