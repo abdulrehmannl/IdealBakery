@@ -22,7 +22,9 @@ const cors = require('cors');
 // port 5173) to communicate with this backend (running on port 5000).
 // Without this, the browser will BLOCK all requests from the frontend.
 
-require('dotenv').config({ silent: true });
+require('dotenv').config({
+    path: process.env.RENDER ? '/etc/secrets/.env' : '.env'
+});
 // dotenv: Reads the .env file and loads its values into process.env
 // This must be called BEFORE we access any process.env variables like PORT.
 
