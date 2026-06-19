@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 
 const AuthContext = createContext();
@@ -7,49 +6,52 @@ const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    // Only needed if you want to use navigation inside the context directly
-    // Note: To use useNavigate here, AuthProvider must be inside BrowserRouter!
-    const navigate = useNavigate();
+  const fetchUser = async () => {
+    try {
+      const res = await api.get('/api/auth/me');
+      if (res.data.success) {
+        setUser(res.data.user);
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const response = await api.get('/api/auth/me');
-                if (response.data.success) {
-                    setUser(response.data.user);
-                }
-            } catch (error) {
-                // If it's a 401, it means no valid token, which is normal if not logged in.
-                setUser(null);
-            } finally {
-                setLoading(false);
-            }
-        };
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
-        checkAuth();
-    }, []);
+  const login = (userData) => {
+    setUser(userData);
+  };
 
-    const login = (userData) => {
-        setUser(userData);
-    };
+  const logout = async () => {
+    try {
+      await api.post('/api/auth/logout');
+      setUser(null);
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
+  };
 
-    const logout = async () => {
-        try {
-            await api.post('/api/auth/logout');
-        } catch (error) {
-            console.error('Logout failed', error);
-        } finally {
-            setUser(null);
-            navigate('/');
-        }
-    };
+  const value = {
+    user,
+    loading,
+    login,
+    logout,
+    fetchUser
+  };
 
-    return (
-        <AuthContext.Provider value={{ user, loading, login, logout }}>
-            {!loading && children}
-        </AuthContext.Provider>
-    );
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
 };

@@ -1,27 +1,11 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
-/**
- * Navbar Component
- * Global navigation bar for the application.
- * Follows the specified layout:
- * - Left: Navigation links (Menu, About, Branches)
- * - Center: Logo (Super Ideal text)
- * - Right: Login link and Order Now button
- */
 function Navbar() {
-    // useLocation tells us which page we're currently on
-    // We use this to highlight the active nav link
     const location = useLocation();
+    const { user, logout } = useAuth();
 
-    /**
-     * Helper function to build the CSS class for a nav link.
-     * If the link's path matches the current page, it gets text-primary (maroon).
-     * Otherwise it's text-text-dark (dark gray).
-     *
-     * @param {string} path - The route to compare, e.g. "/menu"
-     * @returns {string} Tailwind class string
-     */
     const navLinkClass = (path) =>
         `font-nav text-sm font-semibold tracking-wide transition-colors ${
             location.pathname === path || location.pathname.startsWith(path + '/')
@@ -34,27 +18,9 @@ function Navbar() {
 
             {/* ── Left: Navigation Links ── */}
             <div className="flex-1 flex gap-6">
-                {/* MENU → goes to /menu page */}
                 <Link to="/menu" className={navLinkClass('/menu')}>MENU</Link>
-
-                {/* ABOUT — placeholder route (page coming soon) */}
                 <Link to="/about" className="font-nav text-sm font-semibold tracking-wide text-text-dark hover:text-primary transition-colors">ABOUT</Link>
-
-                {/*
-                 * BRANCHES — uses a plain <a> anchor tag (NOT React Router <Link>).
-                 *
-                 * Why? Because we want to navigate to the HOME PAGE and scroll to
-                 * the section with id="branches" (the "Visit Us" section in Branches.jsx).
-                 *
-                 * React Router <Link to="/#branches"> doesn't trigger hash-scrolling
-                 * between pages reliably. A plain <a href="/#branches"> works perfectly:
-                 *   - If already on the homepage → browser scrolls to #branches
-                 *   - If on another page → navigates to home then scrolls to #branches
-                 */}
-                <a
-                    href="/#branches"
-                    className="font-nav text-sm font-semibold tracking-wide text-text-dark hover:text-primary transition-colors"
-                >
+                <a href="/#branches" className="font-nav text-sm font-semibold tracking-wide text-text-dark hover:text-primary transition-colors">
                     BRANCHES
                 </a>
             </div>
@@ -70,19 +36,27 @@ function Navbar() {
 
             {/* ── Right: Actions ── */}
             <div className="flex-1 flex items-center justify-end gap-5">
+                <Link to="/order-tracking" className={navLinkClass('/order-tracking')}>TRACK ORDER</Link>
 
-                {/* ORDER TRACKING link */}
-                <Link
-                    to="/order-tracking"
-                    className={navLinkClass('/order-tracking')}
-                >
-                    TRACK ORDER
-                </Link>
+                {user ? (
+                    <div className="flex items-center gap-4">
+                        <span className="font-nav text-sm font-bold text-text-dark">Hi, {user.name}</span>
+                        {(user.role === 'admin' || user.role === 'manager') && (
+                            <Link to="/admin/dashboard" className={navLinkClass('/admin/dashboard')}>DASHBOARD</Link>
+                        )}
+                        {(user.role === 'staff' || user.role === 'delivery') && (
+                            <Link to="/admin/orders" className={navLinkClass('/admin/orders')}>ORDERS</Link>
+                        )}
+                        <button 
+                            onClick={logout} 
+                            className="font-nav text-sm font-semibold tracking-wide text-red-600 hover:text-red-800 transition-colors">
+                            LOGOUT
+                        </button>
+                    </div>
+                ) : (
+                    <Link to="/login" className={navLinkClass('/login')}>LOGIN</Link>
+                )}
 
-                {/* LOGIN / PROFILE link */}
-                <Link to="/login" className={navLinkClass('/login')}>LOGIN</Link>
-
-                {/* ORDER NOW → goes to /menu page */}
                 <Link
                     to="/menu"
                     className="bg-primary text-white px-6 py-2 rounded font-nav text-sm font-bold tracking-wide hover:bg-[#6A1414] transition-colors shadow shadow-primary/20"
@@ -96,17 +70,3 @@ function Navbar() {
 }
 
 export default Navbar;
-
-/*
- * END OF FILE SUMMARY
- * =====================
- * 1. Concepts used:
- *    - react-router-dom Link components to prevent page reloads
- *    - Flexbox distribution (flex-1) to center the logo perfectly regardless of side content widths.
- * 2. Dummy Data: 
- *    - Anchor links (#about, #branches) are placed as placeholders. 
- * 3. Known limitations:
- *    - Mobile responsiveness (hamburger menu) isn't fully implemented yet, relies on flex wrapping/scaling currently.
- * 4. Performance considerations:
- *    - Uses 'sticky' positioning to prevent recalculating layout shifts.
- */

@@ -235,20 +235,6 @@ function CheckoutPage() {
                                             <p className="text-xs text-text-light mt-0.5">Pay when your order arrives</p>
                                         </div>
                                     </label>
-
-                                    {/* Online payment option */}
-                                    <label className={`flex items-center gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'online' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'}`}>
-                                        <input
-                                            type="radio" name="payment" value="online"
-                                            checked={paymentMethod === 'online'}
-                                            onChange={() => setPaymentMethod('online')}
-                                            className="accent-primary w-4 h-4"
-                                        />
-                                        <div>
-                                            <p className="font-bold text-text-dark text-sm">Online Payment</p>
-                                            <p className="text-xs text-text-light mt-0.5">EasyPaisa / JazzCash / Bank</p>
-                                        </div>
-                                    </label>
                                 </div>
                             </div>
                         </div>

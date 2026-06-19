@@ -1,93 +1,43 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, Phone, User, UserPlus } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { auth, googleProvider } from '../config/firebase';
+import { signInWithPopup } from 'firebase/auth';
+import api from '../utils/api';
 
-/**
- * RegisterPage
- * ============
- * The account creation page for Super Ideal Sweets & Bakers.
- * Collects: Full Name, Email, Phone Number, Password, Confirm Password.
- *
- * Design theme: Matches rest of site —
- *   Primary maroon (#8B1A1A), cream (#F5F0EB), Playfair Display + Lato fonts.
- *
- * Route: /register
- */
 function RegisterPage() {
-    // ── Form State ─────────────────────────────────────────────
-    const [name, setName]                     = useState('');
-    const [email, setEmail]                   = useState('');
-    const [phone, setPhone]                   = useState('');
-    const [password, setPassword]             = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-
-    // ── UI State ───────────────────────────────────────────────
-    // Toggle to show/hide the password field as readable text
-    const [showPassword, setShowPassword]           = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-    // Tracks API call so we can show a loading spinner on the button
+    const navigate = useNavigate();
+    const { login } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    // Stores any validation error message to show the user
-    const [error, setError] = useState('');
-
-    // ── Handlers ───────────────────────────────────────────────
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        setError(''); // clear any previous error
-
-        // Client-side validation: make sure passwords match before sending to API
-        if (password !== confirmPassword) {
-            setError('Passwords do not match. Please check and try again.');
-            return;
-        }
-
-        // Basic password strength check: must be at least 6 characters
-        if (password.length < 6) {
-            setError('Password must be at least 6 characters long.');
-            return;
-        }
-
+    const handleGoogleRegister = async () => {
         setIsLoading(true);
+        setError(null);
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const idToken = await result.user.getIdToken();
 
-        /*
-         * DUMMY SUBMIT — NO REAL API CALL YET
-         * ------------------------------------
-         * TODO (Future API): Replace this with a real axios call:
-         *
-         *   import axios from 'axios';
-         *
-         *   axios.post('/api/users/register', { name, email, phone, password })
-         *     .then(res => {
-         *       // Optionally log in the user right away with their token
-         *       localStorage.setItem('token', res.data.token);
-         *       navigate('/');
-         *     })
-         *     .catch(err => {
-         *       setError(err.response?.data?.message || 'Registration failed.');
-         *       setIsLoading(false);
-         *     });
-         *
-         * NOTE: Do NOT send `confirmPassword` to the server — it's only for client validation.
-         */
-        console.log('Register submitted (dummy):', { name, email, phone, password });
-
-        // Simulate API delay
-        setTimeout(() => setIsLoading(false), 1500);
+            const response = await api.post('/api/auth/google', { idToken });
+            
+            if (response.data.success) {
+                login(response.data.user);
+                navigate('/');
+            } else {
+                setError(response.data.message || 'Registration failed');
+            }
+        } catch (err) {
+            console.error('Google registration error:', err);
+            setError('Failed to sign up with Google. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
-        <div
-            className="flex items-center justify-center min-h-screen px-4 py-12 font-body"
-            style={{ background: 'linear-gradient(135deg, #F5F0EB 0%, #EBE2D5 100%)' }}
-        >
+        <div className="flex items-center justify-center min-h-screen px-4 py-12 font-body" style={{ background: 'linear-gradient(135deg, #F5F0EB 0%, #EBE2D5 100%)' }}>
             <div className="w-full max-w-md">
-
-                {/* ── Card Container ── */}
                 <div className="bg-white rounded-2xl shadow-2xl border border-border overflow-hidden">
-
-                    {/* ── Card Header: Maroon Banner ── */}
                     <div className="bg-primary px-8 py-8 text-center">
                         <h1 className="font-logo text-2xl font-bold text-white mb-2 tracking-tight">
                             Ideal Sweets & Bakers
@@ -96,231 +46,54 @@ function RegisterPage() {
                             Create Account
                         </h2>
                         <p className="mt-2 text-white/75 text-sm font-body">
-                            Join us today and enjoy exclusive offers
+                            Join us to order your favorites!
                         </p>
                     </div>
 
-                    {/* ── Registration Form ── */}
-                    <form className="px-8 py-8 space-y-4" onSubmit={handleSubmit}>
-
-                        {/* ── Validation Error Message ── */}
-                        {/* Only renders if `error` state is set */}
+                    <div className="px-8 py-10">
                         {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg font-semibold">
+                            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm text-center">
                                 {error}
                             </div>
                         )}
 
-                        {/* Full Name Field */}
-                        <div>
-                            <label
-                                className="block text-sm font-semibold text-text-dark mb-1.5"
-                                htmlFor="register-name"
-                            >
-                                Full Name
-                            </label>
-                            <div className="relative">
-                                {/* User icon inside the input */}
-                                <User
-                                    size={16}
-                                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-light pointer-events-none"
-                                />
-                                <input
-                                    id="register-name"
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="Your full name"
-                                    required
-                                    className="w-full pl-10 pr-4 py-3 border border-border rounded-lg text-sm font-body text-text-dark bg-secondary/40 placeholder-text-light/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                                />
-                            </div>
-                        </div>
+                        <button
+                            onClick={handleGoogleRegister}
+                            disabled={isLoading}
+                            className="w-full flex items-center justify-center gap-3 py-3.5 px-4 bg-white border-2 border-border text-text-dark font-bold text-sm rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+                        >
+                            {isLoading ? (
+                                <span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                            ) : (
+                                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                                </svg>
+                            )}
+                            {isLoading ? 'PLEASE WAIT...' : 'SIGN UP WITH GOOGLE'}
+                        </button>
+                    </div>
 
-                        {/* Email Field */}
-                        <div>
-                            <label
-                                className="block text-sm font-semibold text-text-dark mb-1.5"
-                                htmlFor="register-email"
-                            >
-                                Email Address
-                            </label>
-                            <div className="relative">
-                                <Mail
-                                    size={16}
-                                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-light pointer-events-none"
-                                />
-                                <input
-                                    id="register-email"
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="you@example.com"
-                                    required
-                                    className="w-full pl-10 pr-4 py-3 border border-border rounded-lg text-sm font-body text-text-dark bg-secondary/40 placeholder-text-light/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Phone Number Field */}
-                        <div>
-                            <label
-                                className="block text-sm font-semibold text-text-dark mb-1.5"
-                                htmlFor="register-phone"
-                            >
-                                Phone Number
-                            </label>
-                            <div className="relative">
-                                <Phone
-                                    size={16}
-                                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-light pointer-events-none"
-                                />
-                                <input
-                                    id="register-phone"
-                                    type="tel"
-                                    value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
-                                    placeholder="03XX-XXXXXXX"
-                                    required
-                                    className="w-full pl-10 pr-4 py-3 border border-border rounded-lg text-sm font-body text-text-dark bg-secondary/40 placeholder-text-light/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Password Field */}
-                        <div>
-                            <label
-                                className="block text-sm font-semibold text-text-dark mb-1.5"
-                                htmlFor="register-password"
-                            >
-                                Password
-                            </label>
-                            <div className="relative">
-                                <Lock
-                                    size={16}
-                                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-light pointer-events-none"
-                                />
-                                <input
-                                    id="register-password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="Min. 6 characters"
-                                    required
-                                    className="w-full pl-10 pr-12 py-3 border border-border rounded-lg text-sm font-body text-text-dark bg-secondary/40 placeholder-text-light/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                                />
-                                {/* Toggle show/hide for password */}
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword((prev) => !prev)}
-                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-light hover:text-primary transition-colors"
-                                    aria-label="Toggle password visibility"
-                                >
-                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Confirm Password Field */}
-                        <div>
-                            <label
-                                className="block text-sm font-semibold text-text-dark mb-1.5"
-                                htmlFor="register-confirm-password"
-                            >
-                                Confirm Password
-                            </label>
-                            <div className="relative">
-                                <Lock
-                                    size={16}
-                                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-light pointer-events-none"
-                                />
-                                <input
-                                    id="register-confirm-password"
-                                    type={showConfirmPassword ? 'text' : 'password'}
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    placeholder="Re-enter your password"
-                                    required
-                                    className="w-full pl-10 pr-12 py-3 border border-border rounded-lg text-sm font-body text-text-dark bg-secondary/40 placeholder-text-light/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                                />
-                                {/* Toggle show/hide for confirm password field */}
-                                <button
-                                    type="button"
-                                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-light hover:text-primary transition-colors"
-                                    aria-label="Toggle confirm password visibility"
-                                >
-                                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Submit Button */}
-                        <div className="pt-2">
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-primary text-white font-bold text-sm tracking-widest rounded-lg hover:bg-[#6A1414] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed shadow-md"
-                            >
-                                {/* Loading spinner or register icon */}
-                                {isLoading ? (
-                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                ) : (
-                                    <UserPlus size={16} />
-                                )}
-                                {isLoading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'}
-                            </button>
-                        </div>
-
-                    </form>
-
-                    {/* ── Card Footer: Login Link ── */}
-                    <div className="px-8 pb-8 text-center border-t border-border/40 pt-5">
+                    <div className="px-8 pb-8 text-center">
                         <p className="text-sm text-text-light font-body">
                             Already have an account?{' '}
-                            <Link
-                                to="/login"
-                                className="font-bold text-primary hover:text-[#6A1414] transition-colors underline underline-offset-2"
-                            >
+                            <Link to="/login" className="font-bold text-primary hover:text-[#6A1414] transition-colors underline underline-offset-2">
                                 Sign in here →
                             </Link>
                         </p>
                     </div>
-
                 </div>
-
-                {/* Back to home link below the card */}
+                
                 <p className="text-center mt-6 text-sm text-text-light">
                     <Link to="/" className="hover:text-primary transition-colors font-semibold">
                         ← Back to Home
                     </Link>
                 </p>
-
             </div>
         </div>
     );
 }
 
 export default RegisterPage;
-
-/*
- * END OF FILE SUMMARY
- * =====================
- * 1. Concepts used:
- *    - useState for all 5 form fields + 3 UI state variables.
- *    - Separate showPassword / showConfirmPassword toggles for each password field.
- *    - Error state to display validation messages inline (no alert() popups).
- *    - `disabled` attribute on submit button while loading to prevent double-submit.
- * 2. Design:
- *    - Matches site color theme: #8B1A1A primary, #F5F0EB cream, Playfair + Lato fonts.
- *    - Previously used orange (incorrect) — now corrected to maroon theme.
- *    - Icon inputs: User, Mail, Phone, Lock, Eye/EyeOff from lucide-react.
- * 3. Dummy Data:
- *    - Form submission only console.logs. No API call yet.
- *    - TODO: Replace with axios.post('/api/users/register', { name, email, phone, password })
- * 4. Route: /register
- * 5. Validation:
- *    - Password match check (client-side)
- *    - Minimum 6-character password (client-side)
- *    - HTML5 `required` attribute handles empty field validation
- */
