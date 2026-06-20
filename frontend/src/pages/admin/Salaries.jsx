@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, DollarSign } from 'lucide-react';
+import api from '../../utils/api';
 
 /**
  * Salaries Page
@@ -41,18 +42,45 @@ function Salaries() {
   const [month, setMonth] = useState(now.getMonth()); // 0-indexed
   const [year, setYear]   = useState(now.getFullYear());
 
-  // Salary records — editable bonus and deductions per row
-  // TODO: When month/year changes, reload from GET /api/salaries?month=&year=
-  const [salaries, setSalaries] = useState(INITIAL_SALARIES);
+  const [salaries, setSalaries] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchSalaries = async () => {
+    try {
+      // month is 0-indexed in JS, but maybe 1-indexed in API? Assuming 1-indexed for API
+      const res = await api.get(`/api/salaries?month=${month + 1}&year=${year}`);
+      if (res.data.success) {
+        setSalaries(res.data.data.map(s => ({
+          ...s,
+          id: s._id,
+          staffName: s.staff?.name || 'Unknown',
+          role: s.staff?.role || 'Staff',
+          branch: s.staff?.branch || 'Branch'
+        })));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchSalaries(); }, [month, year]);
 
   /**
    * Update bonus or deductions for a specific record.
    * Net salary is always recalculated from these values.
    */
-  const updateField = (id, field, value) => {
+  const updateField = async (id, field, value) => {
+    const numericValue = Number(value) || 0;
     setSalaries(prev =>
-      prev.map(s => s.id === id ? { ...s, [field]: Number(value) || 0 } : s)
+      prev.map(s => s.id === id ? { ...s, [field]: numericValue } : s)
     );
+    try {
+      await api.put(`/api/salaries/${id}`, { [field]: numericValue });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   /**
@@ -60,11 +88,16 @@ function Salaries() {
    * Sets status = 'Paid' and records today's date as paidOn.
    * TODO: PUT /api/salaries/:id/pay
    */
-  const markPaid = (id) => {
-    const today = new Date().toISOString().split('T')[0];
-    setSalaries(prev =>
-      prev.map(s => s.id === id ? { ...s, status: 'Paid', paidOn: today } : s)
-    );
+  const markPaid = async (id) => {
+    try {
+      await api.put(`/api/salaries/${id}/pay`);
+      const today = new Date().toISOString().split('T')[0];
+      setSalaries(prev =>
+        prev.map(s => s.id === id ? { ...s, status: 'Paid', paidOn: today } : s)
+      );
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // ── Summary totals ──────────────────────────────────────────────────────────

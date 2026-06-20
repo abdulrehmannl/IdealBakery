@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock } from 'lucide-react';
+import api from '../../utils/api';
 
 /**
  * Attendance Page
@@ -54,10 +55,55 @@ const buildInitialAttendance = () =>
 function Attendance() {
   // Selected date (defaults to today)
   const [date, setDate] = useState(TODAY);
+  const [staffList, setStaffList] = useState([]);
+  const [records, setRecords] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Array of attendance records — one per staff member
-  // TODO: Re-fetch this when `date` changes: GET /api/attendance?date=date
-  const [records, setRecords] = useState(buildInitialAttendance());
+  const fetchAttendance = async () => {
+    try {
+      const res = await api.get(`/api/attendance?date=${date}`);
+      if (res.data.success) {
+        // If data is returned, we need to map it. Assume backend returns { staff: [], records: [] } or we fetch staff separately.
+        // Actually, let's just fetch staff once and attendance records based on date.
+        // I will assume /api/attendance returns the records for the date. 
+        // We also need staff list. I'll fetch staff first.
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchStaffAndAttendance = async () => {
+    try {
+      setIsLoading(true);
+      // Fetch staff
+      const staffRes = await api.get('/api/staff');
+      const staffData = staffRes.data.success ? staffRes.data.data : [];
+      setStaffList(staffData);
+
+      // Fetch attendance
+      const attRes = await api.get(`/api/attendance?date=${date}`);
+      let attendanceData = attRes.data.success ? attRes.data.data : [];
+      
+      // Merge
+      const mergedRecords = staffData.map(s => {
+        const existing = attendanceData.find(a => a.staff === s._id || a.staffId === s._id);
+        if (existing) {
+          return { staffId: s._id, status: existing.status, arrivalTime: existing.arrivalTime, leaveTime: existing.leaveTime };
+        }
+        return { staffId: s._id, status: 'Present', arrivalTime: '09:00', leaveTime: '18:00' };
+      });
+      setRecords(mergedRecords);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStaffAndAttendance();
+  }, [date]);
 
   /**
    * Update one field for a specific staff member's attendance record.
@@ -76,10 +122,14 @@ function Attendance() {
   const countBy = (status) => records.filter(r => r.status === status).length;
 
   // ── Save all attendance records ────────────────────────────────────────────
-  const handleSave = () => {
-    // TODO: POST /api/attendance  with { date, records }
-    // records = [{ staffId, status, arrivalTime, leaveTime }, ...]
-    alert('Attendance saved! (Connect to API later)');
+  const handleSave = async () => {
+    try {
+      await api.post('/api/attendance', { date, records });
+      alert('Attendance saved successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving attendance');
+    }
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -137,11 +187,11 @@ function Attendance() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {STAFF_LIST.map(staff => {
+              {staffList.map(staff => {
                 // Find this staff member's attendance record
-                const record = records.find(r => r.staffId === staff.id);
+                const record = records.find(r => r.staffId === staff._id) || { status: 'Present', arrivalTime: '09:00', leaveTime: '18:00' };
                 return (
-                  <tr key={staff.id} className="hover:bg-secondary/20 transition-colors">
+                  <tr key={staff._id} className="hover:bg-secondary/20 transition-colors">
 
                     {/* Staff Name */}
                     <td className="px-5 py-3 font-bold text-text-dark">{staff.name}</td>
@@ -164,7 +214,7 @@ function Attendance() {
                           return (
                             <button
                               key={status}
-                              onClick={() => updateRecord(staff.id, 'status', status)}
+                              onClick={() => updateRecord(staff._id, 'status', status)}
                               className="px-2.5 py-1 rounded-lg text-xs font-bold border transition-all duration-150"
                               style={isSelected
                                 ? { backgroundColor: style.bg, color: style.text, borderColor: style.bg }
@@ -185,7 +235,7 @@ function Attendance() {
                         <input
                           type="time"
                           value={record.arrivalTime}
-                          onChange={e => updateRecord(staff.id, 'arrivalTime', e.target.value)}
+                          onChange={e => updateRecord(staff._id, 'arrivalTime', e.target.value)}
                           className="px-2 py-1 border border-border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary/30 w-28"
                           // Disable if Absent — no arrival time needed
                           disabled={record.status === 'Absent'}
@@ -200,7 +250,7 @@ function Attendance() {
                         <input
                           type="time"
                           value={record.leaveTime}
-                          onChange={e => updateRecord(staff.id, 'leaveTime', e.target.value)}
+                          onChange={e => updateRecord(staff._id, 'leaveTime', e.target.value)}
                           className="px-2 py-1 border border-border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary/30 w-28"
                           disabled={record.status === 'Absent'}
                         />

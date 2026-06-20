@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingBag, DollarSign, Users, TrendingUp, AlertTriangle, ChevronRight, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import api from '../../../utils/api';
+import api from '../../utils/api';
 
 const STATUS_COLORS = {
     pending:   'bg-yellow-100 text-yellow-700 border border-yellow-200',
@@ -11,19 +11,8 @@ const STATUS_COLORS = {
     cancelled: 'bg-red-100 text-red-700 border border-red-200',
 };
 
-// Low stock alerts - Placeholder
-const LOW_STOCK = [
-    { name: 'All-Purpose Flour', qty: 3, unit: 'kg',  minStock: 10, branch: 'Branch 1' },
-    { name: 'Whipping Cream',    qty: 2, unit: 'L',   minStock: 5,  branch: 'Branch 2' },
-    { name: 'Dark Chocolate',    qty: 1, unit: 'kg',  minStock: 4,  branch: 'Branch 1' },
-];
+// Using dynamic stats from backend
 
-// Best selling products - Placeholder
-const BEST_SELLERS = [
-    { name: 'Black Forest Cake', sales: 42, revenue: 'Rs. 82,500' },
-    { name: 'Zinger Burger',     sales: 78, revenue: 'Rs. 35,100' },
-    { name: 'Gulab Jamun 1kg',   sales: 55, revenue: 'Rs. 27,500' },
-];
 
 function AdminDashboard() {
     const [stats, setStats] = useState(null);
@@ -151,19 +140,22 @@ function AdminDashboard() {
                         </h2>
                     </div>
                     <div className="divide-y divide-border">
-                        {LOW_STOCK.map((item) => (
-                            <div key={item.name} className="px-6 py-4 flex items-center justify-between opacity-50">
+                        {stats.lowStock?.map((item) => (
+                            <div key={item._id} className="px-6 py-4 flex items-center justify-between opacity-50">
                                 <div>
                                     <p className="font-bold text-text-dark text-sm">{item.name}</p>
-                                    <p className="text-xs text-text-light mt-0.5">{item.branch}</p>
+                                    <p className="text-xs text-text-light mt-0.5">{item.branch?.map(b => b.name).join(', ') || 'N/A'}</p>
                                 </div>
                                 <div className="text-right">
                                     <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2.5 py-1 rounded-full">
-                                        {item.qty} {item.unit} left
+                                        {item.stock} {item.weight || 'units'} left
                                     </span>
                                 </div>
                             </div>
                         ))}
+                        {(!stats.lowStock || stats.lowStock.length === 0) && (
+                            <div className="px-6 py-4 text-sm text-text-light text-center">No low stock items.</div>
+                        )}
                     </div>
                 </div>
 
@@ -172,7 +164,7 @@ function AdminDashboard() {
                         <h2 className="font-heading font-bold text-lg text-text-dark">Best Selling Products</h2>
                     </div>
                     <div className="divide-y divide-border">
-                        {BEST_SELLERS.map((product, index) => (
+                        {stats.bestSellers?.map((product, index) => (
                             <div key={product.name} className="px-6 py-4 flex items-center gap-4 opacity-50">
                                 <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm text-white shrink-0"
                                     style={{ backgroundColor: '#8B1A1A' }}>
@@ -180,11 +172,14 @@ function AdminDashboard() {
                                 </div>
                                 <div className="flex-1">
                                     <p className="font-bold text-text-dark text-sm">{product.name}</p>
-                                    <p className="text-xs text-text-light">{product.sales} sold this month</p>
+                                    <p className="text-xs text-text-light">{product.sales} sold all time</p>
                                 </div>
                                 <p className="font-bold text-primary text-sm">{product.revenue}</p>
                             </div>
                         ))}
+                        {(!stats.bestSellers || stats.bestSellers.length === 0) && (
+                            <div className="px-6 py-4 text-sm text-text-light text-center">No sales data.</div>
+                        )}
                     </div>
                 </div>
             </div>

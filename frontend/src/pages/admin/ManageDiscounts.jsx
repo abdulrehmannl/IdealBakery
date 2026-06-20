@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
+import api from '../../utils/api';
 
 /**
  * ManageDiscounts Page
@@ -32,12 +33,34 @@ const EMPTY_FORM = {
 };
 
 function ManageDiscounts() {
-  const [discounts, setDiscounts] = useState(INITIAL_DISCOUNTS);
+  const [discounts, setDiscounts] = useState([]);
   const [activeTab, setActiveTab] = useState('Active');   // 'Active' or 'Expired'
   const [showForm, setShowForm]   = useState(false);
   const [editId, setEditId]       = useState(null);
   const [form, setForm]           = useState(EMPTY_FORM);
   const [deleteId, setDeleteId]   = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchDiscounts = async () => {
+    try {
+      const res = await api.get('/api/discounts');
+      if (res.data.success) {
+        setDiscounts(res.data.data.map(d => ({
+          ...d,
+          id: d._id,
+          product: d.product || 'All Products',
+          startDate: new Date(d.startDate).toISOString().split('T')[0],
+          endDate: new Date(d.endDate).toISOString().split('T')[0]
+        })));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchDiscounts(); }, []);
 
   // Filter by Active / Expired (which is just isActive toggle)
   const filtered = discounts.filter(d =>
@@ -52,30 +75,42 @@ function ManageDiscounts() {
     setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const parsed = { ...form, value: Number(form.value) };
-    if (editId !== null) {
-      // TODO: PUT /api/discounts/:editId
-      setDiscounts(prev => prev.map(d => d.id === editId ? { ...parsed, id: editId } : d));
-    } else {
-      // TODO: POST /api/discounts
-      const newId = Math.max(...discounts.map(d => d.id)) + 1;
-      setDiscounts(prev => [...prev, { ...parsed, id: newId }]);
+    try {
+      if (editId !== null) {
+        await api.put(`/api/discounts/${editId}`, parsed);
+      } else {
+        await api.post('/api/discounts', parsed);
+      }
+      fetchDiscounts();
+      setShowForm(false);
+    } catch (err) {
+      console.error(err);
     }
-    setShowForm(false);
   };
 
   // Toggle isActive directly from table row
-  const toggleActive = (id) => {
-    // TODO: PUT /api/discounts/:id { isActive: !current }
-    setDiscounts(prev => prev.map(d => d.id === id ? { ...d, isActive: !d.isActive } : d));
+  const toggleActive = async (id) => {
+    const discount = discounts.find(d => d.id === id);
+    if (!discount) return;
+    try {
+      await api.put(`/api/discounts/${id}`, { isActive: !discount.isActive });
+      setDiscounts(prev => prev.map(d => d.id === id ? { ...d, isActive: !d.isActive } : d));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const confirmDelete = () => {
-    // TODO: DELETE /api/discounts/:deleteId
-    setDiscounts(prev => prev.filter(d => d.id !== deleteId));
-    setDeleteId(null);
+  const confirmDelete = async () => {
+    try {
+      await api.delete(`/api/discounts/${deleteId}`);
+      fetchDiscounts();
+      setDeleteId(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (

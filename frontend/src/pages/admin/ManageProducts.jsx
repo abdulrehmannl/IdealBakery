@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit2, Trash2, X, Check } from 'lucide-react';
+import api from '../../utils/api';
 
 /**
  * ManageProducts Page
@@ -30,13 +31,34 @@ const EMPTY_FORM = {
 };
 
 function ManageProducts() {
-    const [products, setProducts]       = useState(INITIAL_PRODUCTS);
+    const [products, setProducts]       = useState([]);
     const [search, setSearch]           = useState('');
     const [filterCat, setFilterCat]     = useState('All');
     const [showForm, setShowForm]       = useState(false);
     const [editId, setEditId]           = useState(null);   // null = adding new, number = editing
     const [form, setForm]               = useState(EMPTY_FORM);
     const [deleteId, setDeleteId]       = useState(null);   // shows confirm dialog when set
+    const [isLoading, setIsLoading]     = useState(true);
+
+    const fetchProducts = async () => {
+        try {
+            const res = await api.get('/api/products');
+            if (res.data.success) {
+                setProducts(res.data.data.map(p => ({
+                    ...p,
+                    id: p._id,
+                    branch: p.branch && p.branch.length ? p.branch.map(b => b.name).join(', ') : 'Both',
+                    category: p.category ? p.category.name : 'Unknown'
+                })));
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => { fetchProducts(); }, []);
 
     // ── Derived: filtered product list ──
     const filtered = products.filter(p => {
@@ -62,25 +84,33 @@ function ManageProducts() {
     };
 
     // ── Submit form (Add or Edit) ──
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const tagsArray = form.tags.split(',').map(t => t.trim()).filter(Boolean);
-        if (editId !== null) {
-            // TODO: PUT /api/products/:id with form data
-            setProducts(prev => prev.map(p => p.id === editId ? { ...form, id: editId, tags: tagsArray, price: +form.price, discount: +form.discount, stock: +form.stock } : p));
-        } else {
-            // TODO: POST /api/products with form data
-            const newId = Math.max(...products.map(p => p.id)) + 1;
-            setProducts(prev => [...prev, { ...form, id: newId, tags: tagsArray, price: +form.price, discount: +form.discount, stock: +form.stock }]);
+        const payload = { ...form, tags: tagsArray, price: +form.price, discount: +form.discount, stock: +form.stock };
+        
+        try {
+            if (editId !== null) {
+                await api.put(`/api/products/${editId}`, payload);
+            } else {
+                await api.post('/api/products', payload);
+            }
+            fetchProducts();
+            setShowForm(false);
+        } catch (err) {
+            console.error('Error saving product', err);
         }
-        setShowForm(false);
     };
 
     // ── Delete product ──
-    const confirmDelete = () => {
-        // TODO: DELETE /api/products/:deleteId
-        setProducts(prev => prev.filter(p => p.id !== deleteId));
-        setDeleteId(null);
+    const confirmDelete = async () => {
+        try {
+            await api.delete(`/api/products/${deleteId}`);
+            fetchProducts();
+            setDeleteId(null);
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     return (

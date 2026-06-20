@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Eye, X } from 'lucide-react';
+import api from '../../utils/api';
 
 /**
  * ManageOrders Page
@@ -157,10 +158,33 @@ const PAYMENT_COLORS = {
 };
 
 function ManageOrders() {
-  // ── State ──────────────────────────────────────────────────────────────────
-  const [orders, setOrders]           = useState(INITIAL_ORDERS);
+  const [orders, setOrders]           = useState([]);
   const [activeTab, setActiveTab]     = useState('All');  // current filter tab
   const [viewOrder, setViewOrder]     = useState(null);   // order shown in detail modal
+  const [isLoading, setIsLoading]     = useState(true);
+
+  const fetchOrders = async () => {
+    try {
+      const res = await api.get('/api/orders');
+      if (res.data.success) {
+        setOrders(res.data.data.map(o => ({
+          ...o,
+          id: o._id,
+          customer: o.customer ? o.customer.name : 'Walk-in',
+          phone: o.customer ? o.customer.phone : 'N/A',
+          branch: o.branch ? o.branch.name : 'N/A',
+          date: new Date(o.createdAt).toLocaleDateString(),
+          time: new Date(o.createdAt).toLocaleTimeString()
+        })));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchOrders(); }, []);
 
   // ── Derived: filtered orders based on active tab ───────────────────────────
   const filtered = activeTab === 'All'
@@ -170,12 +194,16 @@ function ManageOrders() {
   /**
    * Change the status of a specific order.
    * Called when admin selects a new status from the dropdown.
-   * TODO: Also call PUT /api/orders/:id/status { status: newStatus }
    */
-  const updateStatus = (orderId, newStatus) => {
-    setOrders(prev =>
-      prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o)
-    );
+  const updateStatus = async (orderId, newStatus) => {
+    try {
+      await api.put(`/api/orders/${orderId}/status`, { status: newStatus.toLowerCase() });
+      setOrders(prev =>
+        prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o)
+      );
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // ── Count per tab (shows numbers on filter tabs) ───────────────────────────

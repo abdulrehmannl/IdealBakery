@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Order = require('../models/Order');
+const Product = require('../models/Product');
 
 const getDashboardStats = async (req, res, next) => {
     try {
@@ -21,6 +22,28 @@ const getDashboardStats = async (req, res, next) => {
             .populate('customer', 'name phone')
             .populate('branch', 'name');
 
+        // Low stock products
+        const lowStock = await Product.find({ stock: { $lt: 10 } }).populate('branch', 'name');
+
+        // Best Sellers (Aggregated from Orders)
+        const bestSellersAgg = await Order.aggregate([
+            { $unwind: "$items" },
+            { $group: { 
+                _id: "$items.product", 
+                sales: { $sum: "$items.quantity" }, 
+                revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } }
+            }},
+            { $sort: { sales: -1 } },
+            { $limit: 3 }
+        ]);
+
+        const populatedBestSellers = await Product.populate(bestSellersAgg, { path: '_id', select: 'name' });
+        const bestSellers = populatedBestSellers.map(b => ({
+            name: b._id ? b._id.name : 'Unknown Product',
+            sales: b.sales,
+            revenue: `Rs. ${b.revenue}`
+        }));
+
         return res.status(200).json({
             success: true,
             data: {
@@ -28,7 +51,9 @@ const getDashboardStats = async (req, res, next) => {
                 totalStaff,
                 totalOrders,
                 totalRevenue,
-                recentOrders
+                recentOrders,
+                lowStock,
+                bestSellers
             }
         });
     } catch (error) {

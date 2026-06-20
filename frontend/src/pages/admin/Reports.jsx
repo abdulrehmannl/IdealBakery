@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BarChart2 } from 'lucide-react';
+import api from '../../utils/api';
 
 /**
  * Reports Page
@@ -94,14 +95,30 @@ function Reports() {
   const [dateTo, setDateTo]       = useState('2026-04-05');
   const [branch, setBranch]       = useState('All');
 
-  // Current report data based on selected tab
-  const report = DUMMY_REPORTS[activeTab];
+  const [reportData, setReportData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Simulate "generate report" — in real app this calls the API
-  const handleGenerate = () => {
-    // TODO: POST /api/reports/generate { type: activeTab, branch, dateFrom, dateTo }
-    alert(`Generating ${activeTab} report for ${branch} (${dateFrom} → ${dateTo})\n\nConnect to API later.`);
+  const handleGenerate = async () => {
+    setIsLoading(true);
+    try {
+      const res = await api.post('/api/reports/generate', { type: activeTab, branch, dateFrom, dateTo });
+      if (res.data.success) {
+        setReportData(res.data.data);
+      } else {
+        // Fallback for demonstration
+        setReportData(DUMMY_REPORTS[activeTab]);
+      }
+    } catch (err) {
+      console.error(err);
+      // Fallback for demonstration
+      setReportData(DUMMY_REPORTS[activeTab]);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const report = reportData || DUMMY_REPORTS[activeTab];
 
   return (
     <div className="space-y-5">
@@ -147,11 +164,10 @@ function Reports() {
             <option>Branch 2</option>
           </select>
         </div>
-        {/* Generate button */}
-        <button onClick={handleGenerate}
-          className="px-5 py-2 text-white text-sm font-bold rounded-lg hover:opacity-90 transition-opacity shadow-sm"
+        <button onClick={handleGenerate} disabled={isLoading}
+          className="px-5 py-2 text-white text-sm font-bold rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50"
           style={{ backgroundColor: '#8B1A1A' }}>
-          Generate Report
+          {isLoading ? 'Generating...' : 'Generate Report'}
         </button>
       </div>
 

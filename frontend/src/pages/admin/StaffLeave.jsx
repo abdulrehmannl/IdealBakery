@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, X } from 'lucide-react';
+import api from '../../utils/api';
 
 /**
  * StaffLeave Page
@@ -46,7 +47,30 @@ const STATUS_COLORS = {
 };
 
 function StaffLeave() {
-  const [leaves, setLeaves] = useState(INITIAL_LEAVES);
+  const [leaves, setLeaves] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchLeaves = async () => {
+    try {
+      const res = await api.get('/api/leaves');
+      if (res.data.success) {
+        setLeaves(res.data.data.map(l => ({
+          ...l,
+          id: l._id,
+          staffName: l.staff?.name || 'Unknown',
+          role: l.staff?.role || 'Staff',
+          startDate: new Date(l.startDate).toISOString().split('T')[0],
+          endDate: new Date(l.endDate).toISOString().split('T')[0]
+        })));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchLeaves(); }, []);
 
   // Pending requests needing action
   const pending = leaves.filter(l => l.status === 'Pending');
@@ -55,15 +79,23 @@ function StaffLeave() {
   const history = leaves.filter(l => l.status !== 'Pending');
 
   // Approve a leave request
-  const approve = (id) => {
-    // TODO: PUT /api/leaves/:id/approve
-    setLeaves(prev => prev.map(l => l.id === id ? { ...l, status: 'Approved' } : l));
+  const approve = async (id) => {
+    try {
+      await api.put(`/api/leaves/${id}/approve`);
+      setLeaves(prev => prev.map(l => l.id === id ? { ...l, status: 'Approved' } : l));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // Reject a leave request
-  const reject = (id) => {
-    // TODO: PUT /api/leaves/:id/reject
-    setLeaves(prev => prev.map(l => l.id === id ? { ...l, status: 'Rejected' } : l));
+  const reject = async (id) => {
+    try {
+      await api.put(`/api/leaves/${id}/reject`);
+      setLeaves(prev => prev.map(l => l.id === id ? { ...l, status: 'Rejected' } : l));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // Reusable leave card row

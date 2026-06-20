@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, X, Check } from 'lucide-react';
+import api from '../../utils/api';
 
 /**
  * Expenses Page
@@ -50,10 +51,30 @@ function Expenses() {
   const now = new Date();
   const [month, setMonth]       = useState(now.getMonth());
   const [branch, setBranch]     = useState('All');
-  const [expenses, setExpenses] = useState(INITIAL_EXPENSES);
+  const [expenses, setExpenses] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm]         = useState(EMPTY_FORM);
   const [deleteId, setDeleteId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchExpenses = async () => {
+    try {
+      const res = await api.get('/api/expenses'); // Optionally pass ?month=&year= if supported
+      if (res.data.success) {
+        setExpenses(res.data.data.map(e => ({
+          ...e,
+          id: e._id,
+          date: new Date(e.date).toISOString().split('T')[0]
+        })));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchExpenses(); }, [month]); // In a real scenario, you might pass month to fetchExpenses
 
   // Filter by branch
   const filtered = expenses.filter(e =>
@@ -68,19 +89,26 @@ function Expenses() {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: POST /api/expenses with form data
-    const newId = Math.max(...expenses.map(e => e.id)) + 1;
-    setExpenses(prev => [...prev, { ...form, id: newId, amount: Number(form.amount) }]);
-    setShowForm(false);
-    setForm(EMPTY_FORM);
+    try {
+      await api.post('/api/expenses', { ...form, amount: Number(form.amount) });
+      fetchExpenses();
+      setShowForm(false);
+      setForm(EMPTY_FORM);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const confirmDelete = () => {
-    // TODO: DELETE /api/expenses/:deleteId
-    setExpenses(prev => prev.filter(e => e.id !== deleteId));
-    setDeleteId(null);
+  const confirmDelete = async () => {
+    try {
+      await api.delete(`/api/expenses/${deleteId}`);
+      fetchExpenses();
+      setDeleteId(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (

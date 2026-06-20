@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, Check, ChevronRight } from 'lucide-react';
+import api from '../../utils/api';
 
 /**
  * ManageCategories Page
@@ -58,12 +59,31 @@ const EMPTY_FORM = {
 };
 
 function ManageCategories() {
-  // ── State ──────────────────────────────────────────────────────────────────
-  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+  const [categories, setCategories] = useState([]);
   const [showForm, setShowForm]     = useState(false); // show/hide the modal form
   const [editId, setEditId]         = useState(null);  // null = adding new; number = editing
   const [form, setForm]             = useState(EMPTY_FORM);
   const [deleteId, setDeleteId]     = useState(null);  // triggers confirm dialog
+  const [isLoading, setIsLoading]   = useState(true);
+
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get('/api/categories');
+      if (res.data.success) {
+        setCategories(res.data.data.map(c => ({
+          ...c,
+          id: c._id,
+          parentId: c.parentCategory || null
+        })));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchCategories(); }, []);
 
   // ── Derived: list of top-level categories only (for parent dropdown) ───────
   // When adding/editing a category, the parent must be a top-level one
@@ -113,30 +133,31 @@ function ManageCategories() {
   };
 
   // ── Submit: Add or Edit ────────────────────────────────────────────────────
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (editId !== null) {
-      // TODO: PUT /api/categories/:editId  with form data
-      setCategories(prev =>
-        prev.map(c => c.id === editId ? { ...c, ...form } : c)
-      );
-    } else {
-      // TODO: POST /api/categories  with form data
-      const newId = Math.max(...categories.map(c => c.id)) + 1;
-      setCategories(prev => [...prev, { ...form, id: newId }]);
+    const payload = { ...form, parentCategory: form.parentId };
+    try {
+      if (editId !== null) {
+        await api.put(`/api/categories/${editId}`, payload);
+      } else {
+        await api.post('/api/categories', payload);
+      }
+      fetchCategories();
+      setShowForm(false);
+    } catch (err) {
+      console.error(err);
     }
-    setShowForm(false);
   };
 
   // ── Delete confirmed ───────────────────────────────────────────────────────
-  const confirmDelete = () => {
-    // TODO: DELETE /api/categories/:deleteId
-    // Also remove any subcategories whose parentId = deleteId
-    setCategories(prev =>
-      prev.filter(c => c.id !== deleteId && c.parentId !== deleteId)
-    );
-    setDeleteId(null);
+  const confirmDelete = async () => {
+    try {
+      await api.delete(`/api/categories/${deleteId}`);
+      fetchCategories();
+      setDeleteId(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // ── Separate categories into top-level and sub-categories for display ──────

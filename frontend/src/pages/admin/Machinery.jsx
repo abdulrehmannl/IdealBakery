@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, X, Check, Wrench, AlertCircle, CheckCircle } from 'lucide-react';
+import api from '../../utils/api';
 
 /**
  * Machinery Page
@@ -96,13 +97,35 @@ const EMPTY_FORM = {
 };
 
 function Machinery() {
-  const [machines, setMachines]         = useState(INITIAL_MACHINES);
+  const [machines, setMachines]         = useState([]);
   const [branch, setBranch]             = useState('All');
   const [showForm, setShowForm]         = useState(false);
   const [editId, setEditId]             = useState(null);
   const [form, setForm]                 = useState(EMPTY_FORM);
   const [historyId, setHistoryId]       = useState(null); // which machine's history is open
   const [deleteId, setDeleteId]         = useState(null);
+  const [isLoading, setIsLoading]       = useState(true);
+
+  const fetchMachinery = async () => {
+    try {
+      const res = await api.get('/api/machinery');
+      if (res.data.success) {
+        setMachines(res.data.data.map(m => ({
+          ...m,
+          id: m._id,
+          purchaseDate: m.purchaseDate ? new Date(m.purchaseDate).toISOString().split('T')[0] : '',
+          warrantyExpiry: m.warrantyExpiry ? new Date(m.warrantyExpiry).toISOString().split('T')[0] : '',
+          maintenanceHistory: m.maintenanceHistory || []
+        })));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchMachinery(); }, []);
 
   // Filter machines by branch
   const filtered = branch === 'All' ? machines : machines.filter(m => m.branch === branch);
@@ -121,27 +144,30 @@ function Machinery() {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const parsed = { ...form, purchaseCost: Number(form.purchaseCost) };
-    if (editId !== null) {
-      // TODO: PUT /api/machinery/:editId
-      setMachines(prev => prev.map(m => m.id === editId
-        ? { ...m, ...parsed }
-        : m
-      ));
-    } else {
-      // TODO: POST /api/machinery
-      const newId = Math.max(...machines.map(m => m.id)) + 1;
-      setMachines(prev => [...prev, { ...parsed, id: newId, maintenanceHistory: [] }]);
+    try {
+      if (editId !== null) {
+        await api.put(`/api/machinery/${editId}`, parsed);
+      } else {
+        await api.post('/api/machinery', parsed);
+      }
+      fetchMachinery();
+      setShowForm(false);
+    } catch (err) {
+      console.error(err);
     }
-    setShowForm(false);
   };
 
-  const confirmDelete = () => {
-    // TODO: DELETE /api/machinery/:deleteId
-    setMachines(prev => prev.filter(m => m.id !== deleteId));
-    setDeleteId(null);
+  const confirmDelete = async () => {
+    try {
+      await api.delete(`/api/machinery/${deleteId}`);
+      fetchMachinery();
+      setDeleteId(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // Find the machine whose maintenance history is shown in the modal

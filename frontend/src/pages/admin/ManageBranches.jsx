@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Edit2, Check, X, MapPin, Phone } from 'lucide-react';
+import api from '../../utils/api';
 
 /**
  * ManageBranches Page
@@ -38,13 +39,29 @@ const INITIAL_BRANCHES = [
 ];
 
 function ManageBranches() {
-  const [branches, setBranches] = useState(INITIAL_BRANCHES);
+  const [branches, setBranches] = useState([]);
 
   // editId = which branch is currently being edited (null = none)
   const [editId, setEditId]   = useState(null);
 
   // form holds the current edit values
   const [form, setForm]       = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchBranches = async () => {
+    try {
+      const res = await api.get('/api/branches');
+      if (res.data.success) {
+        setBranches(res.data.data.map(b => ({ ...b, id: b._id })));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchBranches(); }, []);
 
   // Open inline edit for a branch
   const openEdit = (branch) => {
@@ -65,12 +82,16 @@ function ManageBranches() {
   };
 
   // Save changes
-  const saveEdit = (e) => {
+  const saveEdit = async (e) => {
     e.preventDefault();
-    // TODO: PUT /api/branches/:editId with form data
-    setBranches(prev => prev.map(b => b.id === editId ? { ...form, id: editId } : b));
-    setEditId(null);
-    setForm({});
+    try {
+      await api.put(`/api/branches/${editId}`, form);
+      fetchBranches();
+      setEditId(null);
+      setForm({});
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (

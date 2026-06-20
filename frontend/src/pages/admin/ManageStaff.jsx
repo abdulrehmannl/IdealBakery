@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, Check, Power } from 'lucide-react';
-import api from '../../../utils/api';
+import api from '../../utils/api';
 
 const ROLES = ['manager', 'staff', 'delivery', 'admin'];
 const BRANCHES = ['6659c2522765874288b8131d', '6659c2522765874288b8131e']; // Need real branch IDs, but falling back to text if needed. Wait, in reality we should fetch branches. For now, the user uses 'Branch 1', 'Branch 2' text if branch is not populated, but the API expects an ObjectId. Let me fetch branches dynamically.
@@ -28,10 +28,10 @@ function ManageStaff() {
         api.get('/api/branches')
       ]);
       if (usersRes.data.success) setStaff(usersRes.data.users);
-      if (branchesRes.data.success) setBranches(branchesRes.data.data);
+      if (branchesRes.data.success) setBranches(branchesRes.data.branches);
       
-      if (branchesRes.data.data.length > 0 && !form.branch) {
-          setForm(prev => ({ ...prev, branch: branchesRes.data.data[0]._id }));
+      if (branchesRes.data.branches?.length > 0 && !form.branch) {
+          setForm(prev => ({ ...prev, branch: branchesRes.data.branches[0]._id }));
       }
     } catch (err) {
       console.error('Failed to fetch data', err);

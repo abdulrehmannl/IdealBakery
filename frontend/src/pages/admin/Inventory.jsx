@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, Check, AlertTriangle } from 'lucide-react';
+import api from '../../utils/api';
 
 /**
  * Inventory Page
@@ -41,12 +42,28 @@ const EMPTY_FORM = {
 };
 
 function Inventory() {
-  const [items, setItems]           = useState(INITIAL_ITEMS);
+  const [items, setItems]           = useState([]);
   const [branch, setBranch]         = useState('All');   // branch filter
   const [showForm, setShowForm]     = useState(false);
   const [editId, setEditId]         = useState(null);
   const [form, setForm]             = useState(EMPTY_FORM);
   const [deleteId, setDeleteId]     = useState(null);
+  const [isLoading, setIsLoading]   = useState(true);
+
+  const fetchInventory = async () => {
+    try {
+      const res = await api.get('/api/inventory');
+      if (res.data.success) {
+        setItems(res.data.data.map(i => ({ ...i, id: i._id })));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchInventory(); }, []);
 
   // Filter items by selected branch
   const filtered = branch === 'All' ? items : items.filter(i => i.branch === branch);
@@ -62,7 +79,7 @@ function Inventory() {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const parsed = {
       ...form,
@@ -70,21 +87,27 @@ function Inventory() {
       minStock:    Number(form.minStock),
       costPerUnit: Number(form.costPerUnit),
     };
-    if (editId !== null) {
-      // TODO: PUT /api/inventory/:editId
-      setItems(prev => prev.map(i => i.id === editId ? { ...parsed, id: editId } : i));
-    } else {
-      // TODO: POST /api/inventory
-      const newId = Math.max(...items.map(i => i.id)) + 1;
-      setItems(prev => [...prev, { ...parsed, id: newId }]);
+    try {
+      if (editId !== null) {
+        await api.put(`/api/inventory/${editId}`, parsed);
+      } else {
+        await api.post('/api/inventory', parsed);
+      }
+      fetchInventory();
+      setShowForm(false);
+    } catch (err) {
+      console.error(err);
     }
-    setShowForm(false);
   };
 
-  const confirmDelete = () => {
-    // TODO: DELETE /api/inventory/:deleteId
-    setItems(prev => prev.filter(i => i.id !== deleteId));
-    setDeleteId(null);
+  const confirmDelete = async () => {
+    try {
+      await api.delete(`/api/inventory/${deleteId}`);
+      fetchInventory();
+      setDeleteId(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (

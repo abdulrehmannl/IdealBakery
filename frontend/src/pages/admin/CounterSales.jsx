@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Minus, Trash2, ShoppingCart } from 'lucide-react';
+import api from '../../utils/api';
 
 /**
  * CounterSales (POS) Page
@@ -52,11 +53,45 @@ function CounterSales() {
   const [orderItems, setOrderItems]     = useState([]);       // items added to current order
   const [paymentMethod, setPayment]     = useState('Cash');   // selected payment method
   const [saleComplete, setSaleComplete] = useState(false);    // shows success message after sale
+  const [products, setProducts]         = useState([]);
+  const [todaysSummary, setTodaysSummary] = useState({
+    totalSales: 0,
+    totalRevenue: 0,
+    cashSales: 0,
+    cardSales: 0,
+    onlineSales: 0,
+  });
+
+  const fetchInitialData = async () => {
+    try {
+      const [prodRes, summaryRes] = await Promise.all([
+        api.get('/api/products?isAvailable=true'),
+        api.get('/api/counter-sales?today=true')
+      ]);
+      
+      if (prodRes.data.success) {
+        setProducts(prodRes.data.data.map(p => ({
+          ...p,
+          id: p._id,
+          image: p.image || '🍞'
+        })));
+      }
+      
+      if (summaryRes.data.success) {
+        setTodaysSummary(summaryRes.data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => { fetchInitialData(); }, []);
 
   // Filter products by search text
-  const filteredProducts = PRODUCTS.filter(p =>
+  const filteredProducts = products.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.category.toLowerCase().includes(search.toLowerCase())
+    (p.category && p.category.name && p.category.name.toLowerCase().includes(search.toLowerCase())) ||
+    (typeof p.category === 'string' && p.category.toLowerCase().includes(search.toLowerCase()))
   );
 
   /**
@@ -106,14 +141,23 @@ function CounterSales() {
    *   totalAmount: total, paymentMethod
    * }
    */
-  const completeSale = () => {
+  const completeSale = async () => {
     if (orderItems.length === 0) return;
-    // TODO: Call POST /api/counter-sales here
-    setSaleComplete(true);
-    setOrderItems([]);
-    setSearch('');
-    // Hide success message after 3 seconds
-    setTimeout(() => setSaleComplete(false), 3000);
+    try {
+      await api.post('/api/counter-sales', {
+        items: orderItems.map(i => ({ product: i.id, qty: i.qty, price: i.price, name: i.name })),
+        totalAmount: total,
+        paymentMethod
+      });
+      setSaleComplete(true);
+      setOrderItems([]);
+      setSearch('');
+      fetchInitialData(); // refresh summary
+      // Hide success message after 3 seconds
+      setTimeout(() => setSaleComplete(false), 3000);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -164,7 +208,7 @@ function CounterSales() {
                   {/* Product name */}
                   <p className="font-bold text-text-dark text-sm leading-tight">{product.name}</p>
                   {/* Category */}
-                  <p className="text-xs text-text-light mt-0.5">{product.category}</p>
+                  <p className="text-xs text-text-light mt-0.5">{product.category?.name || product.category}</p>
                   {/* Price */}
                   <p className="font-bold mt-2 text-sm" style={{ color: '#8B1A1A' }}>
                     Rs. {product.price.toLocaleString()}
@@ -295,11 +339,11 @@ function CounterSales() {
         <h3 className="font-heading font-bold text-base text-text-dark mb-4">Today's Sales Summary</h3>
         <div className="grid grid-cols-5 gap-4">
           {[
-            { label: 'Total Sales',  value: TODAYS_SUMMARY.totalSales,   color: '#8B1A1A' },
-            { label: 'Revenue',      value: `Rs. ${TODAYS_SUMMARY.totalRevenue.toLocaleString()}`, color: '#16a34a' },
-            { label: 'Cash Sales',   value: TODAYS_SUMMARY.cashSales,    color: '#1d4ed8' },
-            { label: 'Card Sales',   value: TODAYS_SUMMARY.cardSales,    color: '#7c3aed' },
-            { label: 'Online Sales', value: TODAYS_SUMMARY.onlineSales,  color: '#0891b2' },
+            { label: 'Total Sales',  value: todaysSummary.totalSales,   color: '#8B1A1A' },
+            { label: 'Revenue',      value: `Rs. ${todaysSummary.totalRevenue.toLocaleString()}`, color: '#16a34a' },
+            { label: 'Cash Sales',   value: todaysSummary.cashSales,    color: '#1d4ed8' },
+            { label: 'Card Sales',   value: todaysSummary.cardSales,    color: '#7c3aed' },
+            { label: 'Online Sales', value: todaysSummary.onlineSales,  color: '#0891b2' },
           ].map(({ label, value, color }) => (
             <div key={label} className="text-center p-3 bg-secondary/30 rounded-lg">
               <p className="font-heading font-bold text-xl" style={{ color }}>{value}</p>
