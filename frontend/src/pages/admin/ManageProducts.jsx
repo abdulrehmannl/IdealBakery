@@ -30,7 +30,9 @@ const EMPTY_FORM = {
     image: '', branch: 'Both',
 };
 
-function ManageProducts() {
+const ManageProducts = () => {
+    const [categoriesList, setCategoriesList] = useState([]);
+    const [branchesList, setBranchesList] = useState([]);
     const [products, setProducts]       = useState([]);
     const [search, setSearch]           = useState('');
     const [filterCat, setFilterCat]     = useState('All');
@@ -40,11 +42,23 @@ function ManageProducts() {
     const [deleteId, setDeleteId]       = useState(null);   // shows confirm dialog when set
     const [isLoading, setIsLoading]     = useState(true);
 
-    const fetchProducts = async () => {
+    const fetchInitialData = async () => {
         try {
-            const res = await api.get('/api/products');
-            if (res.data.success) {
-                setProducts(res.data.data.map(p => ({
+            const [prodRes, catRes, branchRes] = await Promise.all([
+                api.get('/api/products'),
+                api.get('/api/categories'),
+                api.get('/api/branches')
+            ]);
+            
+            if (catRes.data.success) {
+                setCategoriesList(catRes.data.data);
+            }
+            if (branchRes.data.success) {
+                setBranchesList(branchRes.data.data);
+            }
+            
+            if (prodRes.data.success) {
+                setProducts(prodRes.data.data.map(p => ({
                     ...p,
                     id: p._id,
                     branch: p.branch && p.branch.length ? p.branch.map(b => b.name).join(', ') : 'Both',
@@ -58,7 +72,7 @@ function ManageProducts() {
         }
     };
 
-    useEffect(() => { fetchProducts(); }, []);
+    useEffect(() => { fetchInitialData(); }, []);
 
     // ── Derived: filtered product list ──
     const filtered = products.filter(p => {
@@ -68,11 +82,24 @@ function ManageProducts() {
     });
 
     // ── Open Add form ──
-    const openAdd = () => { setForm(EMPTY_FORM); setEditId(null); setShowForm(true); };
+    const openAdd = () => {
+        setForm({
+            ...EMPTY_FORM,
+            category: (categoriesList || []).length > 0 ? categoriesList[0]._id : '',
+            branch: (branchesList || []).length > 0 ? branchesList[0]._id : ''
+        });
+        setEditId(null);
+        setShowForm(true);
+    };
 
     // ── Open Edit form pre-filled with product data ──
     const openEdit = (product) => {
-        setForm({ ...product, tags: product.tags.join(', ') });
+        setForm({ 
+            ...product, 
+            tags: product.tags ? product.tags.join(', ') : '',
+            category: product.category && typeof product.category === 'object' ? product.category._id : product.category,
+            branch: product.branch && Array.isArray(product.branch) && product.branch[0] ? product.branch[0]._id : product.branch
+        });
         setEditId(product.id);
         setShowForm(true);
     };
@@ -87,7 +114,14 @@ function ManageProducts() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const tagsArray = form.tags.split(',').map(t => t.trim()).filter(Boolean);
-        const payload = { ...form, tags: tagsArray, price: +form.price, discount: +form.discount, stock: +form.stock };
+        const payload = { 
+            ...form, 
+            tags: tagsArray, 
+            price: +form.price, 
+            discount: +form.discount, 
+            stock: +form.stock,
+            branch: form.branch ? [form.branch] : [] // Backend expects array of object IDs
+        };
         
         try {
             if (editId !== null) {
@@ -95,7 +129,7 @@ function ManageProducts() {
             } else {
                 await api.post('/api/products', payload);
             }
-            fetchProducts();
+            fetchInitialData();
             setShowForm(false);
         } catch (err) {
             console.error('Error saving product', err);
@@ -106,7 +140,7 @@ function ManageProducts() {
     const confirmDelete = async () => {
         try {
             await api.delete(`/api/products/${deleteId}`);
-            fetchProducts();
+            fetchInitialData();
             setDeleteId(null);
         } catch (err) {
             console.error(err);
@@ -132,7 +166,7 @@ function ManageProducts() {
                     <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
                         className="px-3 py-2.5 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30">
                         <option value="All">All Categories</option>
-                        {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                        {(categoriesList || []).map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                     </select>
                     {/* Add New button */}
                     <button onClick={openAdd}
@@ -227,7 +261,7 @@ function ManageProducts() {
                                 <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Category *</label>
                                 <select name="category" value={form.category} onChange={handleChange}
                                     className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                                    {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                                    {(categoriesList || []).map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                                 </select>
                             </div>
                             {/* Branch */}
@@ -235,7 +269,7 @@ function ManageProducts() {
                                 <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Branch</label>
                                 <select name="branch" value={form.branch} onChange={handleChange}
                                     className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                                    {BRANCHES.map(b => <option key={b}>{b}</option>)}
+                                    {(branchesList || []).map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
                                 </select>
                             </div>
                             {/* Price */}

@@ -41,7 +41,8 @@ const EMPTY_FORM = {
   quantity: '', minStock: '', costPerUnit: '',
 };
 
-function Inventory() {
+const Inventory = () => {
+  const [branchesList, setBranchesList] = useState([]);
   const [items, setItems]           = useState([]);
   const [branch, setBranch]         = useState('All');   // branch filter
   const [showForm, setShowForm]     = useState(false);
@@ -50,11 +51,19 @@ function Inventory() {
   const [deleteId, setDeleteId]     = useState(null);
   const [isLoading, setIsLoading]   = useState(true);
 
-  const fetchInventory = async () => {
+  const fetchInitialData = async () => {
     try {
-      const res = await api.get('/api/inventory');
-      if (res.data.success) {
-        setItems(res.data.data.map(i => ({ ...i, id: i._id })));
+      const [invRes, branchRes] = await Promise.all([
+        api.get('/api/inventory'),
+        api.get('/api/branches')
+      ]);
+      
+      if (branchRes.data.success) {
+        setBranchesList(branchRes.data.data);
+      }
+      
+      if (invRes.data.success) {
+        setItems(invRes.data.data.map(i => ({ ...i, id: i._id })));
       }
     } catch (err) {
       console.error(err);
@@ -63,16 +72,30 @@ function Inventory() {
     }
   };
 
-  useEffect(() => { fetchInventory(); }, []);
+  useEffect(() => { fetchInitialData(); }, []);
 
   // Filter items by selected branch
-  const filtered = branch === 'All' ? items : items.filter(i => i.branch === branch);
+  const filtered = branch === 'All' ? (items || []) : (items || []).filter(i => (i.branch?.name || i.branch) === branch);
 
   // Count how many items are low stock in current view
   const lowStockCount = filtered.filter(i => i.quantity < i.minStock).length;
 
-  const openAdd  = () => { setForm(EMPTY_FORM); setEditId(null); setShowForm(true); };
-  const openEdit = (item) => { setForm({ ...item }); setEditId(item.id); setShowForm(true); };
+  const openAdd  = () => { 
+    setForm({
+      ...EMPTY_FORM,
+      branch: branchesList.length > 0 ? branchesList[0]._id : ''
+    }); 
+    setEditId(null); 
+    setShowForm(true); 
+  };
+  const openEdit = (item) => { 
+    setForm({ 
+      ...item,
+      branch: item.branch?._id || item.branch
+    }); 
+    setEditId(item.id); 
+    setShowForm(true); 
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -93,7 +116,7 @@ function Inventory() {
       } else {
         await api.post('/api/inventory', parsed);
       }
-      fetchInventory();
+      fetchInitialData();
       setShowForm(false);
     } catch (err) {
       console.error(err);
@@ -103,12 +126,14 @@ function Inventory() {
   const confirmDelete = async () => {
     try {
       await api.delete(`/api/inventory/${deleteId}`);
-      fetchInventory();
+      fetchInitialData();
       setDeleteId(null);
     } catch (err) {
       console.error(err);
     }
   };
+
+  if (isLoading) return <div className="p-8 text-center text-text-light">Loading...</div>;
 
   return (
     <div className="space-y-5">
@@ -118,7 +143,7 @@ function Inventory() {
         <div className="flex items-center gap-3">
           {/* Branch filter tabs */}
           <div className="flex gap-1 bg-white border border-border rounded-lg p-1 shadow-sm">
-            {BRANCHES.map(b => (
+            {['All', ...(branchesList || []).map(b => b.name)].map(b => (
               <button
                 key={b}
                 onClick={() => setBranch(b)}
@@ -159,13 +184,13 @@ function Inventory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filtered.map(item => {
+              {(filtered || []).map(item => {
                 // An item is "low stock" when current quantity < minimum required stock
                 const isLow = item.quantity < item.minStock;
                 return (
                   <tr key={item.id} className={`hover:bg-secondary/20 transition-colors ${isLow ? 'bg-red-50/50' : ''}`}>
                     <td className="px-4 py-3 font-bold text-text-dark">{item.name}</td>
-                    <td className="px-4 py-3 text-text-light text-xs">{item.branch}</td>
+                    <td className="px-4 py-3 text-text-light text-xs">{item.branch?.name || item.branch}</td>
                     <td className="px-4 py-3 text-text-light text-xs">{item.unit}</td>
                     {/* Quantity — shown in red if low */}
                     <td className="px-4 py-3">
@@ -226,8 +251,7 @@ function Inventory() {
                 <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Branch *</label>
                 <select name="branch" value={form.branch} onChange={handleChange}
                   className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                  <option>Branch 1</option>
-                  <option>Branch 2</option>
+                  {(branchesList || []).map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
                 </select>
               </div>
               {/* Unit */}

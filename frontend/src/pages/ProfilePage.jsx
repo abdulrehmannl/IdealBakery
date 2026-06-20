@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 import { User, Mail, Phone, ShoppingBag, Edit2, Save, LogOut, Package, ChevronRight } from 'lucide-react';
 
 /**
@@ -19,79 +20,81 @@ function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    /*
-     * DUMMY USER DATA
-     * ---------------
-     * TODO (Future API): Replace with:
-     *   const [user, setUser] = useState(null);
-     *   useEffect(() => {
-     *     axios.get('/api/users/profile', { headers: { Authorization: `Bearer ${token}` } })
-     *       .then(res => setUser(res.data))
-     *   }, []);
-     */
-    const [userData, setUserData] = useState({
-        name: 'Muhammad Abdullah',
-        email: 'abdullah@example.com',  // Email is NOT editable (used as login key)
-        phone: '0323-4404773',
-    });
+    const [userData, setUserData] = useState(null);
+    const [orders, setOrders] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const navigate = useNavigate();
 
-    // Temporary edit values (only committed when Save is clicked)
-    const [editData, setEditData] = useState({ ...userData });
+    useEffect(() => {
+        const fetchProfileData = async () => {
+            try {
+                // Fetch profile
+                const profileRes = await api.get('/api/auth/me');
+                if (profileRes.data.success) {
+                    setUserData({
+                        id: profileRes.data.data._id,
+                        name: profileRes.data.data.name,
+                        email: profileRes.data.data.email || 'No email provided',
+                        phone: profileRes.data.data.phone || 'No phone provided',
+                    });
+                    setEditData({
+                        name: profileRes.data.data.name,
+                        phone: profileRes.data.data.phone || '',
+                    });
+                }
+                
+                // Fetch orders
+                const ordersRes = await api.get('/api/orders/my-orders');
+                if (ordersRes.data.success) {
+                    setOrders(ordersRes.data.data);
+                }
+            } catch (err) {
+                console.error("Failed to load profile data:", err);
+                // If unauthorized, could redirect to login here
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchProfileData();
+    }, []);
+
+    const [editData, setEditData] = useState({ name: '', phone: '' });
 
     // Handle save
-    const handleSave = () => {
+    const handleSave = async () => {
         setIsSaving(true);
-        /*
-         * TODO (Future API): Replace with:
-         *   axios.put('/api/users/profile', editData, { headers: { Authorization: `Bearer ${token}` } })
-         *     .then(() => { setUserData(editData); setIsEditing(false); })
-         */
-        setTimeout(() => {
-            setUserData(editData);
-            setIsEditing(false);
+        try {
+            // Note: Update user endpoint might be /api/users/:id but the user needs their ID.
+            // Using userData.id if the endpoint allows user to update themselves.
+            const res = await api.put(`/api/users/${userData.id}`, editData);
+            if (res.data.success) {
+                setUserData(prev => ({ ...prev, ...editData }));
+                setIsEditing(false);
+            }
+        } catch (err) {
+            console.error('Failed to update profile', err);
+        } finally {
             setIsSaving(false);
-        }, 1000);
+        }
     };
 
     // Cancel edits — revert editData to the last saved userData
     const handleCancel = () => {
-        setEditData({ ...userData });
+        setEditData({ name: userData.name, phone: userData.phone });
         setIsEditing(false);
     };
 
-    /*
-     * DUMMY ORDER HISTORY
-     * --------------------
-     * TODO (Future API): Replace with:
-     *   GET /api/orders?userId=<id>
-     * Maps to the MongoDB Order schema: { _id, status, total, createdAt, items[] }
-     */
-    const orders = [
-        {
-            id: 'ISB-001234',
-            date: 'April 4, 2026',
-            status: 'Delivered',
-            statusColor: 'text-green-600 bg-green-50 border-green-200',
-            items: ['Black Forest Cake', 'Zinger Burger × 2'],
-            total: 2880,
-        },
-        {
-            id: 'ISB-001098',
-            date: 'March 28, 2026',
-            status: 'Delivered',
-            statusColor: 'text-green-600 bg-green-50 border-green-200',
-            items: ['Gulab Jamun 1kg', 'Ras Malai'],
-            total: 1050,
-        },
-        {
-            id: 'ISB-000876',
-            date: 'March 15, 2026',
-            status: 'Delivered',
-            statusColor: 'text-green-600 bg-green-50 border-green-200',
-            items: ['Mithai Gift Box (Large)'],
-            total: 2500,
-        },
-    ];
+    const handleLogout = async () => {
+        try {
+            await api.post('/api/auth/logout');
+            navigate('/');
+        } catch (err) {
+            console.error('Failed to logout', err);
+        }
+    };
+
+    if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#F5F0EB]"><p className="font-bold text-lg text-text-light">Loading Profile...</p></div>;
+    if (!userData) return <div className="min-h-screen flex items-center justify-center bg-[#F5F0EB]"><p className="font-bold text-lg text-text-light">Please log in to view profile.</p></div>;
 
     return (
         <div className="min-h-screen font-body py-10 px-4 md:px-8" style={{ backgroundColor: '#F5F0EB' }}>
@@ -206,9 +209,7 @@ function ProfilePage() {
                             </Link>
                             {/* Logout button — currently just logs to console */}
                             <button
-                                onClick={() => {
-                                    console.log('Logout clicked (dummy) — TODO: clear token and redirect to /login');
-                                }}
+                                onClick={handleLogout}
                                 className="inline-flex items-center gap-2 text-sm font-bold text-red-500 hover:text-red-700 transition-colors w-fit"
                             >
                                 <LogOut size={14} /> Sign Out
@@ -230,29 +231,29 @@ function ProfilePage() {
 
                     <div className="divide-y divide-border">
                         {orders.map((order) => (
-                            <div key={order.id} className="p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-4">
+                            <div key={order._id} className="p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-4">
                                 {/* Order Info */}
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-1">
-                                        <span className="font-bold text-text-dark text-sm">#{order.id}</span>
+                                        <span className="font-bold text-text-dark text-sm">#{order.orderNumber || order._id.slice(-6).toUpperCase()}</span>
                                         {/* Status badge */}
-                                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${order.statusColor}`}>
+                                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${order.status === 'Delivered' ? 'text-green-600 bg-green-50 border-green-200' : 'text-amber-600 bg-amber-50 border-amber-200'}`}>
                                             {order.status}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-text-light mb-2">{order.date}</p>
+                                    <p className="text-xs text-text-light mb-2">{new Date(order.createdAt).toLocaleDateString()}</p>
                                     {/* Item list condensed */}
                                     <p className="text-sm text-text-dark font-semibold">
-                                        {order.items.join(' · ')}
+                                        {order.items.map(item => `${item.product?.name || 'Product'} × ${item.quantity}`).join(' · ')}
                                     </p>
                                 </div>
                                 {/* Right side: total + reorder */}
                                 <div className="flex items-center gap-4 shrink-0">
                                     <span className="font-heading font-bold text-lg text-primary">
-                                        Rs. {order.total.toLocaleString()}
+                                        Rs. {order.totalAmount?.toLocaleString() || 0}
                                     </span>
                                     <button
-                                        onClick={() => console.log('Reorder (dummy):', order.id)}
+                                        onClick={() => console.log('Reorder (dummy):', order._id)}
                                         className="px-4 py-2 border-2 border-primary text-primary text-xs font-bold rounded-lg hover:bg-primary hover:text-white transition-colors"
                                     >
                                         REORDER

@@ -102,7 +102,7 @@ function Reports() {
   const handleGenerate = async () => {
     setIsLoading(true);
     try {
-      const res = await api.post('/api/reports/generate', { type: activeTab, branch, dateFrom, dateTo });
+      const res = await api.post('/api/reports', { type: activeTab, branch, dateFrom, dateTo });
       if (res.data.success) {
         setReportData(res.data.data);
       } else {

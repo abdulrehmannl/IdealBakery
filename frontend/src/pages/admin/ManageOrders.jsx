@@ -172,7 +172,8 @@ function ManageOrders() {
           id: o._id,
           customer: o.customer ? o.customer.name : 'Walk-in',
           phone: o.customer ? o.customer.phone : 'N/A',
-          branch: o.branch ? o.branch.name : 'N/A',
+          branch: o.branch ? (o.branch.name || o.branch) : 'N/A',
+          items: o.items || [],
           date: new Date(o.createdAt).toLocaleDateString(),
           time: new Date(o.createdAt).toLocaleTimeString()
         })));
@@ -282,7 +283,7 @@ function ManageOrders() {
 
                   {/* Number of items */}
                   <td className="px-4 py-3 text-text-light text-xs">
-                    {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                    {order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? 's' : ''}
                   </td>
 
                   {/* Total amount */}
@@ -434,7 +435,7 @@ function ManageOrders() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {viewOrder.items.map((item, i) => (
+                      {(viewOrder.items || []).map((item, i) => (
                         <tr key={i}>
                           <td className="px-4 py-2.5 font-semibold text-text-dark">{item.name}</td>
                           <td className="px-4 py-2.5 text-center text-text-light">×{item.qty}</td>

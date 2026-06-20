@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../utils/api';
 import { Search, Package, Truck, CheckCircle, Clock, ChevronRight, MapPin } from 'lucide-react';
 
 /**
@@ -39,48 +40,38 @@ function OrderTrackingPage() {
     ];
 
     // ── Handle Search Submit ────────────────────────────────────
-    const handleSearch = (e) => {
+    const handleSearch = async (e) => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
+        setTrackedOrder(null);
 
-        /*
-         * DUMMY ORDER LOOKUP — NO REAL API CALL YET
-         * ------------------------------------------
-         * TODO (Future API): Replace with:
-         *   axios.get(`/api/orders/track?orderId=${orderId}&phone=${phone}`)
-         *     .then(res => setTrackedOrder(res.data))
-         *     .catch(err => {
-         *       setError('Order not found. Please check your order ID and phone number.');
-         *       setIsLoading(false);
-         *     });
-         *
-         * The response should match the MongoDB Order schema:
-         *   { _id, status, items, deliveryAddress, createdAt, estimatedDelivery }
-         */
-        setTimeout(() => {
-            setIsLoading(false);
-
-            // Dummy: any order ID starting with "ISB" is "found"
-            if (orderId.toUpperCase().startsWith('ISB') || orderId.length >= 4) {
+        try {
+            const res = await api.get(`/api/orders/track?orderId=${orderId}&phone=${phone}`);
+            if (res.data.success) {
+                const { order, items } = res.data.data;
                 setTrackedOrder({
-                    id: orderId.toUpperCase(),
-                    currentStatus: 'preparing', // This maps to allSteps[1]
-                    customerName: 'Muhammad Abdullah',
-                    phone: phone || '0323-4404773',
-                    items: [
-                        { name: 'Black Forest Cake', qty: 1, price: 1980 },
-                        { name: 'Zinger Burger', qty: 2, price: 900 },
-                    ],
-                    deliveryAddress: 'Dawood Chowk, Karbala Road, Sahiwal',
-                    placedAt: '2026-04-05 at 11:30 AM',
-                    estimatedDelivery: '2026-04-05 between 1:00 PM – 3:00 PM',
-                    total: 2880,
+                    id: order.orderNumber || order._id.slice(-6).toUpperCase(),
+                    currentStatus: order.status, 
+                    customerName: order.customer?.name || 'Customer',
+                    phone: order.phone,
+                    items: items.map(item => ({
+                        name: item.product?.name || 'Product',
+                        qty: item.quantity,
+                        price: item.price
+                    })),
+                    deliveryAddress: order.address,
+                    placedAt: new Date(order.createdAt).toLocaleString(),
+                    estimatedDelivery: 'Typically within 1-2 hours',
+                    total: order.totalAmount,
                 });
-            } else {
-                setError('Order not found. Please check your Order ID and phone number.');
             }
-        }, 1500);
+        } catch (err) {
+            console.error("Order tracking error", err);
+            setError('Order not found. Please check your order ID and phone number.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // ── Gets which steps are completed/active based on current status ──

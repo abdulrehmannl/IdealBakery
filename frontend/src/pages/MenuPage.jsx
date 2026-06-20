@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import api from '../utils/api';
 
 /**
  * MenuPage
@@ -28,70 +29,24 @@ function MenuPage() {
         return () => clearTimeout(timer); // cleanup timer on unmount
     }, [location.pathname]); // re-run if the path changes
 
-    /*
-     * DUMMY DATA — CATEGORIES
-     * -----------------------
-     * TODO (Future API): Replace this array with data fetched from:
-     *   GET /api/categories
-     * Each category will have: name, description, image, _id, isActive
-     * The `link` field maps to the React Router route for that category page.
-     */
-    const categories = [
-        {
-            id: 1,
-            name: 'Fast Food',
-            description: 'Burgers, rolls, shawarma, fries & more savory bites',
-            image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
-            link: '/menu/fast-food',
-            itemCount: 8,
-            badge: 'MOST POPULAR',
-        },
-        {
-            id: 2,
-            name: 'Bakery Items',
-            description: 'Fresh cakes, pastries, breads & cookies baked daily',
-            image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80',
-            link: '/menu/bakery',
-            itemCount: 8,
-            badge: null,
-        },
-        {
-            id: 3,
-            name: 'Desi Items',
-            description: 'Authentic mithai, barfi, halwa & traditional sweets',
-            image: 'https://images.unsplash.com/photo-1605807646983-377bc5a76493?auto=format&fit=crop&w=600&q=80',
-            link: '/menu/desi',
-            itemCount: 6,
-            badge: null,
-        },
-        {
-            id: 4,
-            name: 'Desserts',
-            description: 'Mousse, tiramisu, crème brûlée & indulgent treats',
-            image: 'https://images.unsplash.com/photo-1541783245831-57d6fb0926d3?auto=format&fit=crop&w=600&q=80',
-            link: '/menu/desserts',
-            itemCount: 6,
-            badge: null,
-        },
-        {
-            id: 5,
-            name: 'Ice Cream',
-            description: 'Kulfi, sundaes, scoops & refreshing frozen delights',
-            image: 'https://images.unsplash.com/photo-1559703248-dcaaec9fab78?auto=format&fit=crop&w=600&q=80',
-            link: '/menu/ice-cream',
-            itemCount: 6,
-            badge: 'SEASONAL',
-        },
-        {
-            id: 6,
-            name: 'Beverages',
-            description: 'Hot teas, lattes, fresh juices, smoothies & shakes',
-            image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=600&q=80',
-            link: '/menu/beverages',
-            itemCount: 6,
-            badge: null,
-        },
-    ];
+    const [categories, setCategories] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await api.get('/api/categories');
+                if (res.data.success) {
+                    setCategories(res.data.data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch categories:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchCategories();
+    }, []);
 
     return (
         <div className="min-h-screen font-body" style={{ backgroundColor: '#F5F0EB' }}>
@@ -152,8 +107,8 @@ function MenuPage() {
                              * so clicking anywhere on the card navigates to the category page.
                              */
                             <Link
-                                key={category.id}
-                                to={category.link}
+                                key={category._id}
+                                to={`/menu/${category._id}`}
                                 className="group relative bg-white rounded-xl overflow-hidden shadow-md hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col border border-border"
                             >
                                 {/* ── Badge (top-left, only if present) ── */}
@@ -167,7 +122,7 @@ function MenuPage() {
                                 {/* Fixed height ensures all cards look uniform in the grid */}
                                 <div className="h-52 overflow-hidden relative">
                                     <img
-                                        src={category.image}
+                                        src={category.image || 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80'}
                                         alt={`${category.name} category`}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     />
@@ -190,7 +145,7 @@ function MenuPage() {
                                     {/* Footer row: item count + arrow */}
                                     <div className="flex items-center justify-between mt-auto pt-4 border-t border-border/40">
                                         <span className="text-xs font-bold text-text-light tracking-widest uppercase">
-                                            {category.itemCount} Items
+                                            {category.productCount || 0} Items
                                         </span>
                                         {/* ArrowRight moves right on hover to show interactivity */}
                                         <ArrowRight

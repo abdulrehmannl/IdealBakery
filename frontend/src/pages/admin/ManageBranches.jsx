@@ -52,7 +52,8 @@ function ManageBranches() {
     try {
       const res = await api.get('/api/branches');
       if (res.data.success) {
-        setBranches(res.data.data.map(b => ({ ...b, id: b._id })));
+        const branchesData = res.data.data || [];
+        setBranches(branchesData.map(b => ({ ...b, id: b._id })));
       }
     } catch (err) {
       console.error(err);

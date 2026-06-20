@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { MapPin, Phone, CreditCard, Truck, CheckCircle, ShoppingBag, Trash2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../utils/api';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { MapPin, Phone, CreditCard, Truck, CheckCircle, ShoppingBag, Trash2, Minus, Plus } from 'lucide-react';
 
 /**
  * CheckoutPage
@@ -36,60 +39,75 @@ function CheckoutPage() {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    /*
-     * DUMMY CART ITEMS
-     * -----------------
-     * TODO (Future): Replace with real cart data from a CartContext or global state.
-     * Each item matches the MongoDB Order + OrderItem schema structure.
-     */
-    const cartItems = [
-        {
-            id: 1,
-            name: 'Black Forest Cake',
-            size: 'Regular (1kg)',
-            price: 1980,  // Already discounted (2200 - 10%)
-            quantity: 1,
-            image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=contain&w=200&q=80',
-        },
-        {
-            id: 2,
-            name: 'Zinger Burger',
-            size: 'Standard',
-            price: 450,
-            quantity: 2,
-            image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=contain&w=200&q=80',
-        },
-    ];
+    // Cart and Auth Context
+    const { cartItems, getCartTotal, updateQuantity, removeFromCart, clearCart } = useCart();
+    const { user } = useAuth();
+    const navigate = useNavigate();
 
     // Calculate order totals
-    const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const deliveryFee = subtotal >= 1000 ? 0 : 150; // Free delivery over Rs. 1000
+    const subtotal = getCartTotal();
+    const deliveryFee = subtotal >= 1000 || subtotal === 0 ? 0 : 150; // Free delivery over Rs. 1000
     const total = subtotal + deliveryFee;
 
+    // If cart is empty, redirect or show message
+    if (cartItems.length === 0 && !orderPlaced) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#F5F0EB]">
+                <div className="text-center">
+                    <ShoppingBag size={48} className="text-text-light mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold text-text-dark mb-4">Your cart is empty</h2>
+                    <Link to="/menu" className="bg-primary text-white px-6 py-3 rounded-lg font-bold">BROWSE MENU</Link>
+                </div>
+            </div>
+        );
+    }
+
+    // Require login to checkout
+    if (!user && !orderPlaced) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#F5F0EB]">
+                <div className="text-center bg-white p-10 rounded-2xl shadow-sm border border-border">
+                    <h2 className="text-2xl font-heading font-bold text-text-dark mb-2">Login Required</h2>
+                    <p className="text-text-light font-body mb-6">Please log in to place your order.</p>
+                    <Link to="/login" className="bg-primary text-white px-8 py-3 rounded-lg font-bold text-sm tracking-widest hover:bg-[#6A1414] transition-colors">
+                        LOG IN NOW
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
     // Handle form submission
-    const handlePlaceOrder = (e) => {
+    const handlePlaceOrder = async (e) => {
         e.preventDefault();
         setIsLoading(true);
 
-        /*
-         * DUMMY ORDER SUBMISSION
-         * ----------------------
-         * TODO (Future API): Replace with:
-         *   axios.post('/api/orders', {
-         *     items: cartItems,
-         *     deliveryDetails: formData,
-         *     paymentMethod,
-         *     total,
-         *   })
-         *   .then(res => { setOrderPlaced(true); })
-         *   .catch(err => console.error(err));
-         */
-        console.log('Order placed (dummy):', { cartItems, formData, paymentMethod, total });
+        try {
+            const orderPayload = {
+                items: cartItems.map(item => ({
+                    product: item.id,
+                    quantity: item.quantity,
+                    price: item.price
+                })),
+                totalAmount: total,
+                paymentMethod: paymentMethod === 'cod' ? 'cash' : 'online',
+                address: `${formData.address}, ${formData.city}`,
+                phone: formData.phone,
+                orderType: 'delivery',
+                notes: formData.notes
+            };
 
-        setTimeout(() => {
+            const res = await api.post('/api/orders', orderPayload);
+            if (res.data.success) {
+                setOrderPlaced(true);
+                clearCart();
+            }
+        } catch (err) {
+            console.error('Failed to place order:', err);
+            alert("Failed to place order. Please try again.");
+        } finally {
             setIsLoading(false);
-            setOrderPlaced(true); // Show success screen
-        }, 2000);
+        }
     };
 
     // ── ORDER SUCCESS SCREEN ──────────────────────────────────────
@@ -251,17 +269,47 @@ function CheckoutPage() {
 
                                 <div className="space-y-4">
                                     {cartItems.map((item) => (
-                                        <div key={item.id} className="flex gap-3 items-start">
+                                        <div key={`${item.id}-${item.size}`} className="flex gap-3 items-start relative">
                                             {/* Item thumbnail */}
                                             <div className="w-14 h-14 rounded-lg overflow-hidden border border-border shrink-0 bg-secondary">
                                                 <img src={item.image} alt={item.name} className="w-full h-full object-cover mix-blend-multiply" />
                                             </div>
                                             {/* Item details */}
-                                            <div className="flex-1 min-w-0">
+                                            <div className="flex-1 min-w-0 pr-6">
                                                 <p className="font-bold text-sm text-text-dark leading-tight truncate">{item.name}</p>
-                                                <p className="text-xs text-text-light mt-0.5">{item.size} × {item.quantity}</p>
-                                                <p className="font-bold text-primary text-sm mt-1">Rs. {(item.price * item.quantity).toLocaleString()}</p>
+                                                <p className="text-xs text-text-light mt-0.5">{item.size}</p>
+                                                
+                                                {/* Quantity Controls */}
+                                                <div className="flex items-center gap-3 mt-2">
+                                                    <div className="flex items-center border border-border rounded">
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => updateQuantity(item.id, item.size, item.quantity - 1)}
+                                                            className="px-2 py-0.5 hover:bg-secondary text-text-light"
+                                                        >
+                                                            <Minus size={12} />
+                                                        </button>
+                                                        <span className="px-2 text-xs font-bold text-text-dark">{item.quantity}</span>
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => updateQuantity(item.id, item.size, item.quantity + 1)}
+                                                            className="px-2 py-0.5 hover:bg-secondary text-text-light"
+                                                        >
+                                                            <Plus size={12} />
+                                                        </button>
+                                                    </div>
+                                                    <p className="font-bold text-primary text-sm">Rs. {(item.price * item.quantity).toLocaleString()}</p>
+                                                </div>
                                             </div>
+                                            
+                                            {/* Delete Button */}
+                                            <button 
+                                                type="button"
+                                                onClick={() => removeFromCart(item.id, item.size)}
+                                                className="absolute top-0 right-0 text-red-400 hover:text-red-600 p-1"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </div>
                                     ))}
                                 </div>

@@ -22,7 +22,7 @@ function LoginPage() {
 
     const handleRoleRedirect = (role) => {
         if (role === 'admin' || role === 'manager') {
-            navigate('/admin/dashboard');
+            navigate('/admin');
         } else if (role === 'staff' || role === 'delivery') {
             navigate('/admin/orders');
         } else {

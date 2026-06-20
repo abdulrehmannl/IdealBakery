@@ -1,46 +1,24 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../../utils/api';
 
 function OffersSection() {
-    // Dummy data matching Discount schema
-    const offers = [
-        {
-            id: 1,
-            title: "Weekend Special",
-            discountType: 'percentage',
-            value: 20,
-            product: "Assorted Premium Mithai Box",
-            originalPrice: 2000,
-            discountedPrice: 1600,
-            endDate: new Date("2026-04-10T23:59:59"),
-            isActive: true,
-            image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=500&q=80"
-        },
-        {
-            id: 2,
-            title: "Happy Hour Deal",
-            discountType: 'flat',
-            value: 300,
-            product: "Large Black Forest Cake",
-            originalPrice: 2500,
-            discountedPrice: 2200,
-            endDate: new Date("2026-04-15T23:59:59"),
-            isActive: true,
-            image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=500&q=80"
-        },
-        {
-            id: 3,
-            title: "Combo Offer",
-            discountType: 'percentage',
-            value: 15,
-            product: "Zinger Burger & Fries Combo",
-            originalPrice: 850,
-            discountedPrice: 722,
-            endDate: new Date("2026-04-20T23:59:59"),
-            isActive: true,
-            image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=500&q=80"
-        }
-    ];
+    const [offers, setOffers] = useState([]);
+
+    useEffect(() => {
+        const fetchOffers = async () => {
+            try {
+                const res = await api.get('/api/discounts?isActive=true');
+                if (res.data.success) {
+                    setOffers(res.data.data);
+                }
+            } catch (err) {
+                console.error("Failed to load offers:", err);
+            }
+        };
+        fetchOffers();
+    }, []);
+
 
     return (
         <section className="bg-secondary py-20 px-8 border-t border-border/50">
@@ -58,7 +36,7 @@ function OffersSection() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {offers.map((offer) => (
                         <div 
-                            key={offer.id}
+                            key={offer._id}
                             className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 flex flex-col relative group border border-border/50"
                         >
                             {/* Discount Badge */}
@@ -68,8 +46,8 @@ function OffersSection() {
 
                             <div className="h-56 overflow-hidden relative">
                                 <img 
-                                    src={offer.image} 
-                                    alt={offer.product}
+                                    src={offer.product?.image || 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=500&q=80'} 
+                                    alt={offer.product?.name || offer.title}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
@@ -80,20 +58,22 @@ function OffersSection() {
 
                             <div className="p-6 flex flex-col flex-1 bg-white border border-t-0 border-[#D4C5B0]/40 rounded-b-2xl">
                                 <h4 className="font-body font-bold text-lg text-text-dark mb-2">
-                                    {offer.product}
+                                    {offer.product?.name || offer.title}
                                 </h4>
                                 
                                 <div className="flex items-center gap-3 mb-4">
                                     <span className="font-body text-gray-400 line-through text-sm">
-                                        Rs. {offer.originalPrice}
+                                        Rs. {offer.product?.price}
                                     </span>
                                     <span className="font-body font-bold text-2xl text-primary">
-                                        Rs. {offer.discountedPrice}
+                                        Rs. {offer.discountType === 'percentage' 
+                                                ? Math.floor(offer.product?.price * (1 - offer.value / 100))
+                                                : Math.max(0, offer.product?.price - offer.value)}
                                     </span>
                                 </div>
 
                                 <div className="text-xs text-text-light mb-6 flex items-center gap-1 font-semibold tracking-wide">
-                                    Valid until: <span className="text-text-dark">{offer.endDate.toLocaleDateString()}</span>
+                                    Valid until: <span className="text-text-dark">{new Date(offer.endDate).toLocaleDateString()}</span>
                                 </div>
 
                                 <div className="mt-auto">

@@ -1,25 +1,24 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Clock, Phone } from 'lucide-react';
+import api from '../../utils/api';
 
 function Branches() {
-    const branches = [
-        {
-            id: 1,
-            name: 'Dawood Chowk Branch',
-            address: 'Dawood Chowk، Karbala Road, Madina Colony, Sahiwal, 57000',
-            phone: '0323 4404773',
-            timing: 'Mon - Sun: 7:00 AM - 11:00 PM',
-            image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80'
-        },
-        {
-            id: 2,
-            name: 'Arra Tulla Road Branch',
-            address: 'Arra Tulla Rd, Sahiwal',
-            phone: '0323 4404772',
-            timing: 'Mon - Sun: 8:00 AM - 10:00 PM',
-            image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80'
-        }
-    ];
+    const [branches, setBranches] = useState([]);
+    
+    useEffect(() => {
+        const fetchBranches = async () => {
+            try {
+                const res = await api.get('/api/branches');
+                if (res.data.success) {
+                    setBranches(res.data.branches || res.data.data);
+                }
+            } catch (err) {
+                console.error("Failed to load branches:", err);
+            }
+        };
+        fetchBranches();
+    }, []);
+
 
     return (
         <section id="branches" className="bg-card-bg py-20 px-8">
@@ -36,13 +35,13 @@ function Branches() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-stretch">
                     {branches.map(branch => (
                         <div 
-                            key={branch.id} 
+                            key={branch._id} 
                             className="flex flex-col h-full bg-white border border-border shadow-md hover:shadow-lg hover:-translate-y-1 transition-all"
                         >
                             {/* Fixed h-56 image wrapper to normalize card layouts */}
                             <div className="w-full h-56 relative shrink-0">
                                 <img 
-                                    src={branch.image} 
+                                    src={branch.image || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80'} 
                                     alt={`Storefront of ${branch.name}`}
                                     className="w-full h-full object-cover bg-gray-100 border-b border-border"
                                 />

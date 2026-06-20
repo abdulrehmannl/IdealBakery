@@ -66,19 +66,31 @@ function CounterSales() {
     try {
       const [prodRes, summaryRes] = await Promise.all([
         api.get('/api/products?isAvailable=true'),
-        api.get('/api/counter-sales?today=true')
+        api.get('/api/counter?today=true')
       ]);
       
       if (prodRes.data.success) {
         setProducts(prodRes.data.data.map(p => ({
           ...p,
           id: p._id,
-          image: p.image || '🍞'
+          image: p.image
         })));
       }
       
       if (summaryRes.data.success) {
-        setTodaysSummary(summaryRes.data.data);
+        const salesData = summaryRes.data.data || [];
+        // Calculate the summary from the sales array
+        const cashSales = salesData.filter(s => s.paymentMethod?.toLowerCase() === 'cash').length;
+        const cardSales = salesData.filter(s => s.paymentMethod?.toLowerCase() === 'card').length;
+        const onlineSales = salesData.filter(s => s.paymentMethod?.toLowerCase() === 'online').length;
+        
+        setTodaysSummary({
+          totalSales: salesData.length,
+          totalRevenue: summaryRes.data.totalRevenue || 0,
+          cashSales,
+          cardSales,
+          onlineSales
+        });
       }
     } catch (err) {
       console.error(err);
@@ -203,8 +215,18 @@ function CounterSales() {
                     ${inOrder ? 'border-primary/40 bg-primary/5' : 'border-border'}
                   `}
                 >
-                  {/* Emoji icon */}
-                  <div className="text-3xl mb-2">{product.image}</div>
+                  {/* Product Image */}
+                  <div className="w-[calc(100%+2rem)] h-32 bg-secondary/30 rounded-t-xl overflow-hidden flex items-center justify-center relative -mt-4 -ml-4 mb-3">
+                    {product.image ? (
+                      <img 
+                        src={product.image} 
+                        alt={product.name}
+                        className="w-full h-full object-cover absolute inset-0 z-10"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    ) : null}
+                    <span className="text-4xl text-gray-400 absolute z-0 opacity-40">🍞</span>
+                  </div>
                   {/* Product name */}
                   <p className="font-bold text-text-dark text-sm leading-tight">{product.name}</p>
                   {/* Category */}

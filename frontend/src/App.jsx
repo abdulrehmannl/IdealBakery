@@ -18,13 +18,8 @@ import CheckoutPage from './pages/CheckoutPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 
-// ── Category Pages (6 total) ──
-import FastFoodPage from './pages/categories/FastFoodPage';
-import BakeryItemsPage from './pages/categories/BakeryItemsPage';
-import DesiItemsPage from './pages/categories/DesiItemsPage';
-import DessertsPage from './pages/categories/DessertsPage';
-import IceCreamPage from './pages/categories/IceCreamPage';
-import BeveragesPage from './pages/categories/BeveragesPage';
+// ── Category Pages (Dynamic) ──
+import CategoryPage from './pages/CategoryPage';
 
 // ── Special Order Pages (3 total) ──
 import BirthdayCakesPage from './pages/special/BirthdayCakesPage';
@@ -142,13 +137,8 @@ function AppLayout() {
           */}
           <Route path="/product/:id"    element={<ProductDetailPage />} />
 
-          {/* ── Category Routes — /menu/<slug> ── */}
-          <Route path="/menu/fast-food"  element={<FastFoodPage />} />
-          <Route path="/menu/bakery"     element={<BakeryItemsPage />} />
-          <Route path="/menu/desi"       element={<DesiItemsPage />} />
-          <Route path="/menu/desserts"   element={<DessertsPage />} />
-          <Route path="/menu/ice-cream"  element={<IceCreamPage />} />
-          <Route path="/menu/beverages"  element={<BeveragesPage />} />
+          {/* ── Category Routes — /menu/:id ── */}
+          <Route path="/menu/:id"  element={<CategoryPage />} />
 
           {/* ── Special Order Routes — /special/<slug> ── */}
           <Route path="/special/birthday-cakes" element={<BirthdayCakesPage />} />

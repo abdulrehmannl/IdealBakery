@@ -200,7 +200,7 @@ function Attendance() {
                     <td className="px-5 py-3 text-text-light text-xs">{staff.role}</td>
 
                     {/* Branch */}
-                    <td className="px-5 py-3 text-text-light text-xs">{staff.branch}</td>
+                    <td className="px-5 py-3 text-text-light text-xs">{staff.branch?.name || staff.branch}</td>
 
                     {/* ── Status Buttons ─────────────────────────────────────
                         Four buttons: Present / Absent / Late / Half Day

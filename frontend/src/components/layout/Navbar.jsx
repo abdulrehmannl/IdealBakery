@@ -1,10 +1,13 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
+import { ShoppingCart } from 'lucide-react';
 
 function Navbar() {
     const location = useLocation();
     const { user, logout } = useAuth();
+    const { getCartCount } = useCart();
 
     const navLinkClass = (path) =>
         `font-nav text-sm font-semibold tracking-wide transition-colors ${
@@ -42,7 +45,7 @@ function Navbar() {
                     <div className="flex items-center gap-4">
                         <span className="font-nav text-sm font-bold text-text-dark">Hi, {user.name}</span>
                         {(user.role === 'admin' || user.role === 'manager') && (
-                            <Link to="/admin/dashboard" className={navLinkClass('/admin/dashboard')}>DASHBOARD</Link>
+                            <Link to="/admin" className={navLinkClass('/admin')}>DASHBOARD</Link>
                         )}
                         {(user.role === 'staff' || user.role === 'delivery') && (
                             <Link to="/admin/orders" className={navLinkClass('/admin/orders')}>ORDERS</Link>
@@ -56,6 +59,18 @@ function Navbar() {
                 ) : (
                     <Link to="/login" className={navLinkClass('/login')}>LOGIN</Link>
                 )}
+
+                <Link
+                    to="/checkout"
+                    className="relative text-text-dark hover:text-primary transition-colors flex items-center"
+                >
+                    <ShoppingCart size={24} />
+                    {getCartCount() > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-primary text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
+                            {getCartCount()}
+                        </span>
+                    )}
+                </Link>
 
                 <Link
                     to="/menu"

@@ -1,52 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../../utils/api';
 
 function Categories() {
-    const categories = [
-        { 
-            id: 1, 
-            name: 'Fast Food', 
-            subcategories: ['Burgers', 'Rolls', 'Shawarma', 'Fries'],
-            // Link goes directly to the Fast Food category page
-            link: '/menu/fast-food',
-            image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80' 
-        },
-        { 
-            id: 2, 
-            name: 'Bakery Items', 
-            subcategories: ['Cakes', 'Pastries', 'Breads', 'Cookies'],
-            link: '/menu/bakery',
-            image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=400&q=80' 
-        },
-        { 
-            id: 3, 
-            name: 'Desi Items', 
-            subcategories: ['Mithai', 'Barfi', 'Halwa'],
-            link: '/menu/desi',
-            image: 'https://images.unsplash.com/photo-1605807646983-377bc5a76493?auto=format&fit=crop&w=400&q=80' 
-        },
-        { 
-            id: 4, 
-            name: 'Desserts', 
-            subcategories: ['Puddings', 'Mousses', 'Trifles'],
-            link: '/menu/desserts',
-            image: 'https://images.unsplash.com/photo-1541783245831-57d6fb0926d3?auto=format&fit=crop&w=400&q=80' 
-        },
-        { 
-            id: 5, 
-            name: 'Ice Cream', 
-            subcategories: ['Scoops', 'Sundaes', 'Shakes'],
-            link: '/menu/ice-cream',
-            image: 'https://images.unsplash.com/photo-1559703248-dcaaec9fab78?auto=format&fit=crop&w=400&q=80' 
-        },
-        { 
-            id: 6, 
-            name: 'Beverages', 
-            subcategories: ['Hot Drinks', 'Cold Drinks'],
-            link: '/menu/beverages',
-            image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=400&q=80' 
-        }
-    ];
+    const [categories, setCategories] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await api.get('/api/categories');
+                if (res.data.success) {
+                    setCategories(res.data.data);
+                }
+            } catch (err) {
+                console.error("Failed to load categories:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchCategories();
+    }, []);
+
 
     return (
         <section className="bg-[#EBE2D5] py-20 px-8 select-none border-t border-border/50">
@@ -64,13 +39,13 @@ function Categories() {
                 <div className="flex overflow-x-auto pb-6 md:pb-0 justify-start lg:justify-between gap-6 lg:gap-0 snap-x snap-mandatory hide-scrollbar w-full">
                     {categories.map((category) => (
                         <Link 
-                            to={category.link}
-                            key={category.id} 
+                            to={`/menu/${category._id}`}
+                            key={category._id} 
                             className="flex flex-col items-center gap-4 cursor-pointer group snap-center shrink-0 w-36 md:w-44 text-center hover:-translate-y-1 transition-transform"
                         >
                             <div className="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden shadow-md group-hover:shadow-xl transition-all duration-300 border-4 border-transparent group-hover:border-primary/20">
                                 <img 
-                                    src={category.image} 
+                                    src={category.image || 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=400&q=80'} 
                                     alt={`${category.name} category`}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 bg-[#EBE2D5]"
                                 />
@@ -80,7 +55,7 @@ function Categories() {
                                     {category.name}
                                 </span>
                                 <span className="absolute bottom-0 translate-y-8 font-body text-[10px] md:text-xs text-text-dark/80 font-bold tracking-wide group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                                    {category.subcategories.join(' • ')}
+                                    Explore Items
                                 </span>
                             </div>
                         </Link>

@@ -34,6 +34,7 @@ const EMPTY_FORM = {
 
 function ManageDiscounts() {
   const [discounts, setDiscounts] = useState([]);
+  const [productsList, setProductsList] = useState([]);
   const [activeTab, setActiveTab] = useState('Active');   // 'Active' or 'Expired'
   const [showForm, setShowForm]   = useState(false);
   const [editId, setEditId]       = useState(null);
@@ -41,14 +42,22 @@ function ManageDiscounts() {
   const [deleteId, setDeleteId]   = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchDiscounts = async () => {
+  const fetchInitialData = async () => {
     try {
-      const res = await api.get('/api/discounts');
-      if (res.data.success) {
-        setDiscounts(res.data.data.map(d => ({
+      const [discRes, prodRes] = await Promise.all([
+        api.get('/api/discounts'),
+        api.get('/api/products')
+      ]);
+
+      if (prodRes.data.success) {
+        setProductsList(prodRes.data.data);
+      }
+
+      if (discRes.data.success) {
+        setDiscounts(discRes.data.data.map(d => ({
           ...d,
           id: d._id,
-          product: d.product || 'All Products',
+          product: d.product || null,
           startDate: new Date(d.startDate).toISOString().split('T')[0],
           endDate: new Date(d.endDate).toISOString().split('T')[0]
         })));
@@ -60,7 +69,7 @@ function ManageDiscounts() {
     }
   };
 
-  useEffect(() => { fetchDiscounts(); }, []);
+  useEffect(() => { fetchInitialData(); }, []);
 
   // Filter by Active / Expired (which is just isActive toggle)
   const filtered = discounts.filter(d =>
@@ -68,7 +77,7 @@ function ManageDiscounts() {
   );
 
   const openAdd  = () => { setForm(EMPTY_FORM); setEditId(null); setShowForm(true); };
-  const openEdit = (d) => { setForm({ ...d }); setEditId(d.id); setShowForm(true); };
+  const openEdit = (d) => { setForm({ ...d, product: d.product?._id || d.product || '' }); setEditId(d.id); setShowForm(true); };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -78,13 +87,14 @@ function ManageDiscounts() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const parsed = { ...form, value: Number(form.value) };
+    if (!parsed.product) parsed.product = null;
     try {
       if (editId !== null) {
         await api.put(`/api/discounts/${editId}`, parsed);
       } else {
         await api.post('/api/discounts', parsed);
       }
-      fetchDiscounts();
+      fetchInitialData();
       setShowForm(false);
     } catch (err) {
       console.error(err);
@@ -106,7 +116,7 @@ function ManageDiscounts() {
   const confirmDelete = async () => {
     try {
       await api.delete(`/api/discounts/${deleteId}`);
-      fetchDiscounts();
+      fetchInitialData();
       setDeleteId(null);
     } catch (err) {
       console.error(err);
@@ -165,7 +175,7 @@ function ManageDiscounts() {
                   <td className="px-4 py-3 font-bold" style={{ color: '#8B1A1A' }}>
                     {d.discountType === 'percentage' ? `${d.value}%` : `Rs. ${d.value}`}
                   </td>
-                  <td className="px-4 py-3 text-text-light text-xs">{d.product}</td>
+                  <td className="px-4 py-3 text-text-light text-xs">{d.product?.name || 'All Products'}</td>
                   <td className="px-4 py-3 text-text-light text-xs">{d.startDate}</td>
                   <td className="px-4 py-3 text-text-light text-xs">{d.endDate}</td>
                   {/* isActive toggle switch */}
@@ -243,8 +253,11 @@ function ManageDiscounts() {
               {/* Product */}
               <div>
                 <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Product / Category</label>
-                <input name="product" value={form.product} onChange={handleChange} placeholder="e.g. All Cakes"
-                  className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                <select name="product" value={form.product} onChange={handleChange}
+                  className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                  <option value="">All Products</option>
+                  {productsList.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+                </select>
               </div>
               {/* Start Date */}
               <div>

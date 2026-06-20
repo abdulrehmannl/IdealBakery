@@ -50,6 +50,7 @@ const EMPTY_FORM = {
 function Expenses() {
   const now = new Date();
   const [month, setMonth]       = useState(now.getMonth());
+  const [branchesList, setBranchesList] = useState([]);
   const [branch, setBranch]     = useState('All');
   const [expenses, setExpenses] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -57,11 +58,19 @@ function Expenses() {
   const [deleteId, setDeleteId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchExpenses = async () => {
+  const fetchInitialData = async () => {
     try {
-      const res = await api.get('/api/expenses'); // Optionally pass ?month=&year= if supported
-      if (res.data.success) {
-        setExpenses(res.data.data.map(e => ({
+      const [expRes, branchRes] = await Promise.all([
+        api.get('/api/expenses'),
+        api.get('/api/branches')
+      ]);
+
+      if (branchRes.data.success) {
+        setBranchesList(branchRes.data.data);
+      }
+
+      if (expRes.data.success) {
+        setExpenses(expRes.data.data.map(e => ({
           ...e,
           id: e._id,
           date: new Date(e.date).toISOString().split('T')[0]
@@ -74,11 +83,11 @@ function Expenses() {
     }
   };
 
-  useEffect(() => { fetchExpenses(); }, [month]); // In a real scenario, you might pass month to fetchExpenses
+  useEffect(() => { fetchInitialData(); }, [month]);
 
   // Filter by branch
-  const filtered = expenses.filter(e =>
-    (branch === 'All' || e.branch === branch)
+  const filtered = (expenses || []).filter(e =>
+    (branch === 'All' || (e.branch?.name || e.branch) === branch)
   );
 
   // Total expenses in current view
@@ -93,9 +102,12 @@ function Expenses() {
     e.preventDefault();
     try {
       await api.post('/api/expenses', { ...form, amount: Number(form.amount) });
-      fetchExpenses();
+      fetchInitialData();
       setShowForm(false);
-      setForm(EMPTY_FORM);
+      setForm({
+        ...EMPTY_FORM,
+        branch: branchesList.length > 0 ? branchesList[0]._id : ''
+      });
     } catch (err) {
       console.error(err);
     }
@@ -104,12 +116,14 @@ function Expenses() {
   const confirmDelete = async () => {
     try {
       await api.delete(`/api/expenses/${deleteId}`);
-      fetchExpenses();
+      fetchInitialData();
       setDeleteId(null);
     } catch (err) {
       console.error(err);
     }
   };
+
+  if (isLoading) return <div className="p-8 text-center text-text-light">Loading...</div>;
 
   return (
     <div className="space-y-5">
@@ -124,7 +138,7 @@ function Expenses() {
           </select>
           {/* Branch filter */}
           <div className="flex gap-1 bg-white border border-border rounded-lg p-1 shadow-sm">
-            {['All', 'Branch 1', 'Branch 2'].map(b => (
+            {['All', ...(branchesList || []).map(b => b.name)].map(b => (
               <button key={b} onClick={() => setBranch(b)}
                 className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-150 ${branch === b ? 'text-white' : 'text-text-light hover:text-text-dark'}`}
                 style={branch === b ? { backgroundColor: '#8B1A1A' } : {}}>
@@ -133,7 +147,13 @@ function Expenses() {
             ))}
           </div>
         </div>
-        <button onClick={() => setShowForm(true)}
+        <button onClick={() => {
+          setForm({
+            ...EMPTY_FORM,
+            branch: branchesList.length > 0 ? branchesList[0]._id : ''
+          });
+          setShowForm(true);
+        }}
           className="flex items-center gap-2 px-4 py-2.5 text-white text-sm font-bold rounded-lg hover:opacity-90 transition-opacity shadow-sm"
           style={{ backgroundColor: '#8B1A1A' }}>
           <Plus size={16} /> Add Expense
@@ -163,7 +183,7 @@ function Expenses() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filtered.map(exp => (
+              {(filtered || []).map(exp => (
                 <tr key={exp.id} className="hover:bg-secondary/20 transition-colors">
                   <td className="px-4 py-3 font-bold text-text-dark">{exp.title}</td>
                   <td className="px-4 py-3">
@@ -173,7 +193,7 @@ function Expenses() {
                   </td>
                   <td className="px-4 py-3 font-bold text-text-dark">Rs. {exp.amount.toLocaleString()}</td>
                   <td className="px-4 py-3 text-text-light text-xs">{exp.date}</td>
-                  <td className="px-4 py-3 text-text-light text-xs">{exp.branch}</td>
+                  <td className="px-4 py-3 text-text-light text-xs">{exp.branch?.name || exp.branch}</td>
                   <td className="px-4 py-3 text-text-light text-xs">{exp.paidBy}</td>
                   <td className="px-4 py-3">
                     <button onClick={() => setDeleteId(exp.id)}
@@ -231,7 +251,7 @@ function Expenses() {
                 <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Branch *</label>
                 <select name="branch" value={form.branch} onChange={handleChange}
                   className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                  <option>Branch 1</option><option>Branch 2</option>
+                  {(branchesList || []).map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
                 </select>
               </div>
               {/* Paid By */}

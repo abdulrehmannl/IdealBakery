@@ -97,6 +97,7 @@ const EMPTY_FORM = {
 };
 
 function Machinery() {
+  const [branchesList, setBranchesList] = useState([]);
   const [machines, setMachines]         = useState([]);
   const [branch, setBranch]             = useState('All');
   const [showForm, setShowForm]         = useState(false);
@@ -106,11 +107,19 @@ function Machinery() {
   const [deleteId, setDeleteId]         = useState(null);
   const [isLoading, setIsLoading]       = useState(true);
 
-  const fetchMachinery = async () => {
+  const fetchInitialData = async () => {
     try {
-      const res = await api.get('/api/machinery');
-      if (res.data.success) {
-        setMachines(res.data.data.map(m => ({
+      const [machRes, branchRes] = await Promise.all([
+        api.get('/api/machinery'),
+        api.get('/api/branches')
+      ]);
+
+      if (branchRes.data.success) {
+        setBranchesList(branchRes.data.data);
+      }
+
+      if (machRes.data.success) {
+        setMachines(machRes.data.data.map(m => ({
           ...m,
           id: m._id,
           purchaseDate: m.purchaseDate ? new Date(m.purchaseDate).toISOString().split('T')[0] : '',
@@ -125,14 +134,21 @@ function Machinery() {
     }
   };
 
-  useEffect(() => { fetchMachinery(); }, []);
+  useEffect(() => { fetchInitialData(); }, []);
 
   // Filter machines by branch
-  const filtered = branch === 'All' ? machines : machines.filter(m => m.branch === branch);
+  const filtered = branch === 'All' ? (machines || []) : (machines || []).filter(m => (m.branch?.name || m.branch) === branch);
 
-  const openAdd  = () => { setForm(EMPTY_FORM); setEditId(null); setShowForm(true); };
+  const openAdd  = () => { 
+    setForm({
+      ...EMPTY_FORM,
+      branch: branchesList.length > 0 ? branchesList[0]._id : ''
+    }); 
+    setEditId(null); 
+    setShowForm(true); 
+  };
   const openEdit = (m) => {
-    setForm({ name: m.name, branch: m.branch, purchaseDate: m.purchaseDate,
+    setForm({ name: m.name, branch: m.branch?._id || m.branch, purchaseDate: m.purchaseDate,
       purchaseCost: m.purchaseCost, condition: m.condition,
       description: m.description, warrantyExpiry: m.warrantyExpiry });
     setEditId(m.id);
@@ -153,7 +169,7 @@ function Machinery() {
       } else {
         await api.post('/api/machinery', parsed);
       }
-      fetchMachinery();
+      fetchInitialData();
       setShowForm(false);
     } catch (err) {
       console.error(err);
@@ -163,7 +179,7 @@ function Machinery() {
   const confirmDelete = async () => {
     try {
       await api.delete(`/api/machinery/${deleteId}`);
-      fetchMachinery();
+      fetchInitialData();
       setDeleteId(null);
     } catch (err) {
       console.error(err);
@@ -171,7 +187,9 @@ function Machinery() {
   };
 
   // Find the machine whose maintenance history is shown in the modal
-  const historyMachine = machines.find(m => m.id === historyId);
+  const historyMachine = (machines || []).find(m => m.id === historyId);
+
+  if (isLoading) return <div className="p-8 text-center text-text-light">Loading...</div>;
 
   return (
     <div className="space-y-5">
@@ -180,7 +198,7 @@ function Machinery() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Branch filter tabs */}
         <div className="flex gap-1 bg-white border border-border rounded-lg p-1 shadow-sm">
-          {BRANCHES.map(b => (
+          {['All', ...(branchesList || []).map(b => b.name)].map(b => (
             <button
               key={b}
               onClick={() => setBranch(b)}
@@ -205,7 +223,7 @@ function Machinery() {
       {/* ── Machine Cards Grid ── */}
       {/* Each machine is shown as a card, not a table row */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map(machine => {
+        {(filtered || []).map(machine => {
           const cs = CONDITION_STYLES[machine.condition] || CONDITION_STYLES.Good;
           const ConditionIcon = cs.icon;
 
@@ -221,7 +239,7 @@ function Machinery() {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-heading font-bold text-base text-text-dark">{machine.name}</h3>
-                  <p className="text-xs text-text-light mt-0.5">{machine.branch}</p>
+                  <p className="text-xs text-text-light mt-0.5">{machine.branch?.name || machine.branch}</p>
                 </div>
                 {/* Condition badge */}
                 <span
@@ -309,7 +327,7 @@ function Machinery() {
                 <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Branch *</label>
                 <select name="branch" value={form.branch} onChange={handleChange}
                   className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                  <option>Branch 1</option><option>Branch 2</option>
+                  {(branchesList || []).map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
                 </select>
               </div>
               <div>
@@ -371,7 +389,7 @@ function Machinery() {
                 <p className="text-text-light text-sm text-center py-6">No maintenance records yet.</p>
               ) : (
                 <div className="space-y-3">
-                  {historyMachine.maintenanceHistory.map((h, i) => (
+                  {(historyMachine.maintenanceHistory || []).map((h, i) => (
                     <div key={i} className="flex gap-4 p-3 bg-secondary/30 rounded-lg">
                       <div className="text-xs font-bold text-text-light whitespace-nowrap">{h.date}</div>
                       <div className="text-sm text-text-dark">{h.note}</div>

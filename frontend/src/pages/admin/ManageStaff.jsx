@@ -28,10 +28,10 @@ function ManageStaff() {
         api.get('/api/branches')
       ]);
       if (usersRes.data.success) setStaff(usersRes.data.users);
-      if (branchesRes.data.success) setBranches(branchesRes.data.branches);
+      if (branchesRes.data.success) setBranches(branchesRes.data.data);
       
-      if (branchesRes.data.branches?.length > 0 && !form.branch) {
-          setForm(prev => ({ ...prev, branch: branchesRes.data.branches[0]._id }));
+      if (branchesRes.data.data?.length > 0 && !form.branch) {
+          setForm(prev => ({ ...prev, branch: branchesRes.data.data[0]._id }));
       }
     } catch (err) {
       console.error('Failed to fetch data', err);
