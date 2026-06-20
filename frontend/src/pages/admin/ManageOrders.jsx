@@ -170,7 +170,8 @@ function ManageOrders() {
         setOrders(res.data.data.map(o => ({
           ...o,
           id: o._id,
-          customer: o.customer ? o.customer.name : 'Walk-in',
+          status: o.status ? (o.status.charAt(0).toUpperCase() + o.status.slice(1)) : 'Pending',
+          customer: o.customer ? o.customer.name : (o.customerName || 'Walk-in'),
           phone: o.customer ? o.customer.phone : 'N/A',
           branch: o.branch ? (o.branch.name || o.branch) : 'N/A',
           items: o.items || [],

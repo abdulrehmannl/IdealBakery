@@ -44,6 +44,8 @@ import Expenses from './pages/admin/Expenses';
 import ManageDiscounts from './pages/admin/ManageDiscounts';
 import ManageBranches from './pages/admin/ManageBranches';
 
+import ProtectedRoute from './components/ProtectedRoute';
+
 /**
  * AUTH PAGES LIST
  * ================
@@ -105,21 +107,21 @@ function AppLayout() {
               AdminLayout renders the sidebar + top bar automatically.
               The individual page becomes the `children` inside AdminLayout.
           */}
-          <Route path="/admin"              element={<AdminLayout><AdminDashboard /></AdminLayout>} />
-          <Route path="/admin/products"    element={<AdminLayout><ManageProducts /></AdminLayout>} />
-          <Route path="/admin/categories"  element={<AdminLayout><ManageCategories /></AdminLayout>} />
-          <Route path="/admin/orders"      element={<AdminLayout><ManageOrders /></AdminLayout>} />
-          <Route path="/admin/staff"       element={<AdminLayout><ManageStaff /></AdminLayout>} />
-          <Route path="/admin/attendance"  element={<AdminLayout><Attendance /></AdminLayout>} />
-          <Route path="/admin/salaries"    element={<AdminLayout><Salaries /></AdminLayout>} />
-          <Route path="/admin/inventory"   element={<AdminLayout><Inventory /></AdminLayout>} />
-          <Route path="/admin/machinery"   element={<AdminLayout><Machinery /></AdminLayout>} />
-          <Route path="/admin/counter"     element={<AdminLayout><CounterSales /></AdminLayout>} />
-          <Route path="/admin/reports"     element={<AdminLayout><Reports /></AdminLayout>} />
-          <Route path="/admin/leaves"      element={<AdminLayout><StaffLeave /></AdminLayout>} />
-          <Route path="/admin/expenses"    element={<AdminLayout><Expenses /></AdminLayout>} />
-          <Route path="/admin/discounts"   element={<AdminLayout><ManageDiscounts /></AdminLayout>} />
-          <Route path="/admin/branches"    element={<AdminLayout><ManageBranches /></AdminLayout>} />
+          <Route path="/admin"              element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><AdminDashboard /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/products"    element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><ManageProducts /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/categories"  element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><ManageCategories /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/orders"      element={<ProtectedRoute allowedRoles={['admin', 'manager', 'staff', 'delivery']}><AdminLayout><ManageOrders /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/staff"       element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><ManageStaff /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/attendance"  element={<ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><AdminLayout><Attendance /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/salaries"    element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Salaries /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/inventory"   element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><Inventory /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/machinery"   element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><Machinery /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/counter"     element={<ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><AdminLayout><CounterSales /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/reports"     element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><Reports /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/leaves"      element={<ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><AdminLayout><StaffLeave /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/expenses"    element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Expenses /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/discounts"   element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><ManageDiscounts /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/branches"    element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><ManageBranches /></AdminLayout></ProtectedRoute>} />
 
           {/* ── Auth Routes (no navbar/footer — handled by isAuthPage above) ── */}
           <Route path="/login"          element={<LoginPage />} />

@@ -29,8 +29,8 @@ function CheckoutPage() {
     // Which payment method is selected
     const [paymentMethod, setPaymentMethod] = useState('cod'); // 'cod' or 'online'
 
-    // Whether the order was successfully placed
-    const [orderPlaced, setOrderPlaced] = useState(false);
+    // Whether the order was successfully placed and its info
+    const [orderPlaced, setOrderPlaced] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
     // Handle input changes — updates the matching field in formData
@@ -62,21 +62,6 @@ function CheckoutPage() {
         );
     }
 
-    // Require login to checkout
-    if (!user && !orderPlaced) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-[#F5F0EB]">
-                <div className="text-center bg-white p-10 rounded-2xl shadow-sm border border-border">
-                    <h2 className="text-2xl font-heading font-bold text-text-dark mb-2">Login Required</h2>
-                    <p className="text-text-light font-body mb-6">Please log in to place your order.</p>
-                    <Link to="/login" className="bg-primary text-white px-8 py-3 rounded-lg font-bold text-sm tracking-widest hover:bg-[#6A1414] transition-colors">
-                        LOG IN NOW
-                    </Link>
-                </div>
-            </div>
-        );
-    }
-
     // Handle form submission
     const handlePlaceOrder = async (e) => {
         e.preventDefault();
@@ -93,13 +78,14 @@ function CheckoutPage() {
                 paymentMethod: paymentMethod === 'cod' ? 'cash' : 'online',
                 address: `${formData.address}, ${formData.city}`,
                 phone: formData.phone,
+                customerName: formData.name,
                 orderType: 'delivery',
                 notes: formData.notes
             };
 
             const res = await api.post('/api/orders', orderPayload);
             if (res.data.success) {
-                setOrderPlaced(true);
+                setOrderPlaced(res.data.data.orderNumber || res.data.data._id);
                 clearCart();
             }
         } catch (err) {
@@ -129,12 +115,12 @@ function CheckoutPage() {
                         Thank you, <span className="font-bold text-text-dark">{formData.name || 'valued customer'}</span>!
                     </p>
                     <p className="font-body text-text-light text-sm mb-8">
-                        Your order of <span className="font-bold text-primary">Rs. {total.toLocaleString()}</span> has been received. We'll call you on <span className="font-bold text-text-dark">{formData.phone}</span> to confirm.
+                        Your order has been received. We'll call you on <span className="font-bold text-text-dark">{formData.phone}</span> to confirm.
                     </p>
-                    {/* Dummy order ID — backend will generate a real one */}
+                    {/* Real order ID from backend */}
                     <div className="bg-secondary/60 border border-border rounded-xl p-4 mb-8">
                         <p className="text-xs text-text-light font-semibold tracking-widest uppercase mb-1">Order Reference</p>
-                        <p className="font-heading font-bold text-xl text-primary">#ISB-{Date.now().toString().slice(-6)}</p>
+                        <p className="font-heading font-bold text-xl text-primary">{orderPlaced}</p>
                     </div>
                     <div className="flex flex-col gap-3">
                         <Link
@@ -284,7 +270,7 @@ function CheckoutPage() {
                                                     <div className="flex items-center border border-border rounded">
                                                         <button 
                                                             type="button"
-                                                            onClick={() => updateQuantity(item.id, item.size, item.quantity - 1)}
+                                                            onClick={() => updateQuantity(item.id, item.size, Math.max(1, item.quantity - 1))}
                                                             className="px-2 py-0.5 hover:bg-secondary text-text-light"
                                                         >
                                                             <Minus size={12} />

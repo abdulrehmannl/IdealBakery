@@ -110,7 +110,9 @@ app.use(cors({
 }));
 
 // ── 5b. Helmet — secure HTTP headers ──
-app.use(helmet());
+app.use(helmet({
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }
+}));
 // Sets 15+ security-related HTTP response headers automatically.
 // Protects against clickjacking, MIME sniffing, XSS via headers, etc.
 

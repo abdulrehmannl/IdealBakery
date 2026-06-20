@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useCart } from '../context/CartContext';
 import { Star, ShoppingCart, Minus, Plus, ChevronRight, Tag, Package, Clock, Check } from 'lucide-react';
@@ -20,6 +20,7 @@ function ProductDetailPage() {
     // useParams extracts the `:id` from the URL
     // e.g., if URL is /product/3, then id = "3"
     const { id } = useParams();
+    const navigate = useNavigate();
 
     // Quantity selector state — starts at 1
     const [quantity, setQuantity] = useState(1);
@@ -254,12 +255,20 @@ function ProductDetailPage() {
                                 {addedToCart ? 'ADDED' : 'ADD TO CART'}
                             </button>
                             {/* Order Now — goes to checkout */}
-                            <Link
-                                to="/checkout"
+                            <button
+                                onClick={() => {
+                                    addToCart({
+                                        id: product._id,
+                                        name: product.name,
+                                        price: discountedPrice,
+                                        image: product.image || 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=80',
+                                    }, quantity, selectedSize);
+                                    navigate('/checkout');
+                                }}
                                 className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-primary text-white font-bold text-sm tracking-widest rounded-lg hover:bg-[#6A1414] transition-colors shadow-lg"
                             >
                                 ORDER NOW
-                            </Link>
+                            </button>
                         </div>
 
                         <div className="flex flex-wrap gap-3">

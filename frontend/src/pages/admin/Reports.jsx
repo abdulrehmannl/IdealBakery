@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BarChart2 } from 'lucide-react';
 import api from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 
 /**
  * Reports Page
@@ -12,120 +13,118 @@ import api from '../../utils/api';
  *   POST /api/reports/generate → { type, branch, dateFrom, dateTo } → returns report data
  */
 
-// ── Report Types (tab navigation) ─────────────────────────────────────────────
-const REPORT_TABS = ['Sales', 'Attendance', 'Inventory', 'Salary'];
-
-// ── DUMMY DATA ──────────────────────────────────────────────────────────────
-// TODO: Replace with real data from POST /api/reports/generate
-
-// Each tab has its own summary cards and table data
-const DUMMY_REPORTS = {
-  Sales: {
-    summary: [
-      { label: 'Total Orders',   value: '124' },
-      { label: 'Total Revenue',  value: 'Rs. 1,84,500' },
-      { label: 'Avg Order Value',value: 'Rs. 1,488' },
-      { label: 'Top Branch',    value: 'Branch 1' },
-    ],
-    headers: ['Date', 'Orders', 'Revenue', 'Branch'],
-    rows: [
-      ['2026-04-01', '18', 'Rs. 26,400', 'Branch 1'],
-      ['2026-04-02', '22', 'Rs. 31,200', 'Branch 2'],
-      ['2026-04-03', '15', 'Rs. 22,800', 'Branch 1'],
-      ['2026-04-04', '28', 'Rs. 41,600', 'Both'],
-      ['2026-04-05', '41', 'Rs. 62,500', 'Branch 1'],
-    ],
-  },
-  Attendance: {
-    summary: [
-      { label: 'Total Working Days', value: '5' },
-      { label: 'Avg Present',        value: '5.2 / 6' },
-      { label: 'Total Absences',     value: '3' },
-      { label: 'Total Late',         value: '2' },
-    ],
-    headers: ['Staff Name', 'Present Days', 'Absent Days', 'Late Days'],
-    rows: [
-      ['Ali Hassan',   '5', '0', '0'],
-      ['Sara Ahmed',   '4', '1', '0'],
-      ['Kamran Baig',  '5', '0', '0'],
-      ['Nadia Kausar', '3', '1', '1'],
-      ['Imran Mirza',  '4', '0', '1'],
-      ['Zara Malik',   '5', '0', '0'],
-    ],
-  },
-  Inventory: {
-    summary: [
-      { label: 'Total Items',    value: '8' },
-      { label: 'Low Stock Items',value: '3' },
-      { label: 'Total Value',    value: 'Rs. 42,650' },
-      { label: 'Items Used',     value: '12 this week' },
-    ],
-    headers: ['Item', 'Branch', 'Quantity', 'Status'],
-    rows: [
-      ['All-Purpose Flour', 'Branch 1', '3 kg',    'LOW STOCK'],
-      ['Sugar',             'Branch 1', '25 kg',   'OK'],
-      ['Whipping Cream',    'Branch 2', '2 L',     'LOW STOCK'],
-      ['Dark Chocolate',    'Branch 1', '1 kg',    'LOW STOCK'],
-      ['Butter',            'Branch 2', '12 kg',   'OK'],
-      ['Eggs',             'Branch 1', '8 dozen', 'OK'],
-    ],
-  },
-  Salary: {
-    summary: [
-      { label: 'Total Payroll',   value: 'Rs. 1,73,000' },
-      { label: 'Paid',            value: 'Rs. 70,000' },
-      { label: 'Pending',         value: 'Rs. 1,03,000' },
-      { label: 'Total Staff',     value: '6' },
-    ],
-    headers: ['Staff Name', 'Basic Salary', 'Net Salary', 'Status'],
-    rows: [
-      ['Ali Hassan',   'Rs. 45,000', 'Rs. 48,000', 'Paid'],
-      ['Sara Ahmed',   'Rs. 28,000', 'Rs. 27,000', 'Pending'],
-      ['Kamran Baig',  'Rs. 35,000', 'Rs. 37,000', 'Pending'],
-      ['Nadia Kausar', 'Rs. 22,000', 'Rs. 21,500', 'Pending'],
-      ['Imran Mirza',  'Rs. 25,000', 'Rs. 26,500', 'Paid'],
-      ['Zara Malik',   'Rs. 18,000', 'Rs. 18,000', 'Pending'],
-    ],
-  },
-};
-
 function Reports() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('Sales');
-  const [dateFrom, setDateFrom]   = useState('2026-04-01');
-  const [dateTo, setDateTo]       = useState('2026-04-05');
+  const [dateFrom, setDateFrom]   = useState(new Date().toISOString().split('T')[0]);
+  const [dateTo, setDateTo]       = useState(new Date().toISOString().split('T')[0]);
   const [branch, setBranch]       = useState('All');
 
   const [reportData, setReportData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Simulate "generate report" — in real app this calls the API
+  // Map API response to the format expected by the UI
+  const formatReportData = (type, dataObj) => {
+    if (!dataObj) return null;
+    
+    switch (type.toLowerCase()) {
+      case 'sales':
+        return {
+          summary: [
+            { label: 'Total Orders',   value: dataObj.totalOrders || 0 },
+            { label: 'Total Revenue',  value: `Rs. ${dataObj.totalRevenue || 0}` },
+            { label: 'Avg Order Value',value: `Rs. ${dataObj.totalOrders ? Math.round(dataObj.totalRevenue / dataObj.totalOrders) : 0}` },
+            { label: 'Pending Orders', value: dataObj.byStatus?.pending || 0 },
+          ],
+          headers: ['Status', 'Count'],
+          rows: [
+            ['Pending', dataObj.byStatus?.pending || 0],
+            ['Confirmed', dataObj.byStatus?.confirmed || 0],
+            ['Preparing', dataObj.byStatus?.preparing || 0],
+            ['Delivered', dataObj.byStatus?.delivered || 0],
+            ['Cancelled', dataObj.byStatus?.cancelled || 0],
+          ]
+        };
+      case 'attendance':
+        return {
+          summary: [
+            { label: 'Total Records', value: dataObj.totalRecords || 0 },
+            { label: 'Present',       value: dataObj.present || 0 },
+            { label: 'Absent',        value: dataObj.absent || 0 },
+            { label: 'Late',          value: dataObj.late || 0 },
+          ],
+          headers: ['Status', 'Count'],
+          rows: [
+            ['Present', dataObj.present || 0],
+            ['Absent', dataObj.absent || 0],
+            ['Late', dataObj.late || 0],
+            ['Half-day', dataObj.halfday || 0],
+          ]
+        };
+      case 'inventory':
+        return {
+          summary: [
+            { label: 'Total Items',    value: dataObj.totalItems || 0 },
+            { label: 'Low Stock Items',value: dataObj.lowStockItems || 0 },
+            { label: 'Total Value',    value: `Rs. ${dataObj.totalCostValue || 0}` },
+          ],
+          headers: ['Low Stock Item Name'],
+          rows: (dataObj.lowStockNames || []).map(name => [name])
+        };
+      case 'salary':
+        return {
+          summary: [
+            { label: 'Total Records', value: dataObj.totalRecords || 0 },
+            { label: 'Total Paid',    value: `Rs. ${dataObj.totalPaid || 0}` },
+            { label: 'Total Pending', value: `Rs. ${dataObj.totalPending || 0}` },
+          ],
+          headers: ['Status', 'Staff Count', 'Amount'],
+          rows: [
+            ['Paid', dataObj.paidCount || 0, `Rs. ${dataObj.totalPaid || 0}`],
+            ['Pending', dataObj.pendingCount || 0, `Rs. ${dataObj.totalPending || 0}`],
+          ]
+        };
+      default:
+        return null;
+    }
+  };
+
   const handleGenerate = async () => {
     setIsLoading(true);
+    setError(null);
     try {
-      const res = await api.post('/api/reports', { type: activeTab, branch, dateFrom, dateTo });
+      const payload = {
+        title: `${activeTab} Report (${dateFrom} to ${dateTo})`,
+        type: activeTab.toLowerCase(),
+        branch: branch === 'All' ? null : branch, // Note: ideally branch should be the ObjectId, but for now we send what we have
+        generatedBy: user?.id,
+        dateFrom,
+        dateTo
+      };
+      
+      const res = await api.post('/api/reports', payload);
       if (res.data.success) {
-        setReportData(res.data.data);
+        setReportData(formatReportData(activeTab, res.data.data.data));
       } else {
-        // Fallback for demonstration
-        setReportData(DUMMY_REPORTS[activeTab]);
+        setError(res.data.message || 'Failed to generate report');
+        setReportData(null);
       }
     } catch (err) {
       console.error(err);
-      // Fallback for demonstration
-      setReportData(DUMMY_REPORTS[activeTab]);
+      setError(err.response?.data?.message || 'An error occurred while generating the report.');
+      setReportData(null);
     } finally {
       setIsLoading(false);
     }
   };
-
-  const report = reportData || DUMMY_REPORTS[activeTab];
 
   return (
     <div className="space-y-5">
 
       {/* ── Report Type Tabs ── */}
       <div className="flex gap-1 bg-white border border-border rounded-xl p-1.5 w-fit shadow-sm">
-        {REPORT_TABS.map(tab => (
+        {['Sales', 'Attendance', 'Inventory', 'Salary'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -171,9 +170,26 @@ function Reports() {
         </button>
       </div>
 
-      {/* ── Summary Cards ── */}
+      {error && (
+        <div className="p-4 bg-red-100 text-red-700 rounded-lg text-sm border border-red-200">
+          {error}
+        </div>
+      )}
+
+      {/* ── Empty State ── */}
+      {!reportData && !isLoading && !error && (
+        <div className="bg-white rounded-xl border border-border shadow-sm p-12 text-center">
+          <BarChart2 size={48} className="mx-auto text-border mb-4" />
+          <h3 className="font-heading font-bold text-xl text-text-dark mb-2">No Report Generated</h3>
+          <p className="text-text-light text-sm">Select your filters and click "Generate Report" to view data.</p>
+        </div>
+      )}
+
+      {reportData && (
+        <>
+          {/* ── Summary Cards ── */}
       <div className="grid grid-cols-4 gap-4">
-        {report.summary.map(({ label, value }) => (
+        {reportData.summary.map(({ label, value }) => (
           <div key={label} className="bg-white rounded-xl border border-border p-5 shadow-sm">
             <p className="text-xs font-bold text-text-light uppercase tracking-wide mb-1">{label}</p>
             <p className="font-heading font-bold text-xl text-text-dark">{value}</p>
@@ -194,40 +210,37 @@ function Reports() {
       {/* ── Data Table ── */}
       <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-border">
-          <h3 className="font-heading font-bold text-base text-text-dark">{activeTab} Report Data</h3>
+          <h3 className="font-heading font-bold text-base text-text-dark">{activeTab} Report Breakdown</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border" style={{ backgroundColor: '#F5F0EB' }}>
-                {report.headers.map(h => (
-                  <th key={h} className="text-left px-5 py-3 font-bold text-text-light text-xs tracking-wide uppercase">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {report.rows.map((row, i) => (
-                <tr key={i} className="hover:bg-secondary/20 transition-colors">
-                  {row.map((cell, j) => (
-                    <td key={j} className={`px-5 py-3 text-sm ${j === 0 ? 'font-bold text-text-dark' : 'text-text-light'}`}>
-                      {/* Highlight LOW STOCK / status cells */}
-                      {cell === 'LOW STOCK' ? (
-                        <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">{cell}</span>
-                      ) : cell === 'OK' ? (
-                        <span className="text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">{cell}</span>
-                      ) : cell === 'Paid' ? (
-                        <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">{cell}</span>
-                      ) : cell === 'Pending' ? (
-                        <span className="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">{cell}</span>
-                      ) : cell}
-                    </td>
+          {reportData.rows.length === 0 ? (
+            <div className="p-8 text-center text-text-light text-sm">No data available for this breakdown.</div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border" style={{ backgroundColor: '#F5F0EB' }}>
+                  {reportData.headers.map(h => (
+                    <th key={h} className="text-left px-5 py-3 font-bold text-text-light text-xs tracking-wide uppercase">{h}</th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {reportData.rows.map((row, i) => (
+                  <tr key={i} className="hover:bg-secondary/20 transition-colors">
+                    {row.map((cell, j) => (
+                      <td key={j} className={`px-5 py-3 text-sm ${j === 0 ? 'font-bold text-text-dark' : 'text-text-light'}`}>
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
+        </>
+      )}
 
     </div>
   );

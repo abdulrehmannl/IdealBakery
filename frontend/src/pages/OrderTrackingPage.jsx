@@ -47,7 +47,10 @@ function OrderTrackingPage() {
         setTrackedOrder(null);
 
         try {
-            const res = await api.get(`/api/orders/track?orderId=${orderId}&phone=${phone}`);
+            const cleanOrderId = orderId.replace(/^#/, '').trim();
+            const cleanPhone = phone.trim();
+            
+            const res = await api.get(`/api/orders/track?orderId=${encodeURIComponent(cleanOrderId)}&phone=${encodeURIComponent(cleanPhone)}`);
             if (res.data.success) {
                 const { order, items } = res.data.data;
                 setTrackedOrder({
@@ -224,6 +227,15 @@ function OrderTrackingPage() {
                             </div>
 
                             {/* Estimated Delivery */}
+                        {trackedOrder.currentStatus === 'delivered' ? (
+                            <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+                                <CheckCircle size={18} className="text-green-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-xs font-bold text-green-700 tracking-widest uppercase mb-0.5">Delivered</p>
+                                    <p className="font-bold text-green-900 text-sm">Your order has been delivered! Thank you for ordering.</p>
+                                </div>
+                            </div>
+                        ) : (
                             <div className="bg-secondary/60 border border-border rounded-xl p-4 mb-6 flex items-start gap-3">
                                 <Truck size={18} className="text-primary shrink-0 mt-0.5" />
                                 <div>
@@ -231,6 +243,7 @@ function OrderTrackingPage() {
                                     <p className="font-bold text-text-dark text-sm">{trackedOrder.estimatedDelivery}</p>
                                 </div>
                             </div>
+                        )}
 
                             {/* Delivery Address */}
                             <div className="flex items-start gap-3 mb-6">

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
     LayoutDashboard, Package, Grid, ShoppingBag, Users,
     Calendar, DollarSign, Archive, Settings, Monitor,
@@ -20,24 +21,25 @@ import {
 // Navigation menu items — each maps to an admin page route
 // To add a new page: just push a new object into this array
 const NAV_ITEMS = [
-    { label: 'Dashboard',     path: '/admin',            Icon: LayoutDashboard },
-    { label: 'Products',      path: '/admin/products',   Icon: Package         },
-    { label: 'Categories',    path: '/admin/categories', Icon: Grid            },
-    { label: 'Orders',        path: '/admin/orders',     Icon: ShoppingBag     },
-    { label: 'Staff',         path: '/admin/staff',      Icon: Users           },
-    { label: 'Attendance',    path: '/admin/attendance', Icon: Calendar        },
-    { label: 'Salaries',      path: '/admin/salaries',   Icon: DollarSign      },
-    { label: 'Inventory',     path: '/admin/inventory',  Icon: Archive         },
-    { label: 'Machinery',     path: '/admin/machinery',  Icon: Settings        },
-    { label: 'Counter Sales', path: '/admin/counter',    Icon: Monitor         },
-    { label: 'Reports',       path: '/admin/reports',    Icon: BarChart2       },
-    { label: 'Staff Leave',   path: '/admin/leaves',     Icon: Clock           },
-    { label: 'Expenses',      path: '/admin/expenses',   Icon: Receipt         },
-    { label: 'Discounts',     path: '/admin/discounts',  Icon: Tag             },
-    { label: 'Branches',      path: '/admin/branches',   Icon: MapPin          },
+    { label: 'Dashboard',     path: '/admin',            Icon: LayoutDashboard, allowedRoles: ['admin', 'manager'] },
+    { label: 'Products',      path: '/admin/products',   Icon: Package,         allowedRoles: ['admin', 'manager'] },
+    { label: 'Categories',    path: '/admin/categories', Icon: Grid,            allowedRoles: ['admin'] },
+    { label: 'Orders',        path: '/admin/orders',     Icon: ShoppingBag,     allowedRoles: ['admin', 'manager', 'staff', 'delivery'] },
+    { label: 'Staff',         path: '/admin/staff',      Icon: Users,           allowedRoles: ['admin', 'manager'] },
+    { label: 'Attendance',    path: '/admin/attendance', Icon: Calendar,        allowedRoles: ['admin', 'manager', 'staff'] },
+    { label: 'Salaries',      path: '/admin/salaries',   Icon: DollarSign,      allowedRoles: ['admin'] },
+    { label: 'Inventory',     path: '/admin/inventory',  Icon: Archive,         allowedRoles: ['admin', 'manager'] },
+    { label: 'Machinery',     path: '/admin/machinery',  Icon: Settings,        allowedRoles: ['admin', 'manager'] },
+    { label: 'Counter Sales', path: '/admin/counter',    Icon: Monitor,         allowedRoles: ['admin', 'manager', 'staff'] },
+    { label: 'Reports',       path: '/admin/reports',    Icon: BarChart2,       allowedRoles: ['admin', 'manager'] },
+    { label: 'Staff Leave',   path: '/admin/leaves',     Icon: Clock,           allowedRoles: ['admin', 'manager', 'staff'] },
+    { label: 'Expenses',      path: '/admin/expenses',   Icon: Receipt,         allowedRoles: ['admin'] },
+    { label: 'Discounts',     path: '/admin/discounts',  Icon: Tag,             allowedRoles: ['admin', 'manager'] },
+    { label: 'Branches',      path: '/admin/branches',   Icon: MapPin,          allowedRoles: ['admin'] },
 ];
 
 function AdminSidebar() {
+    const { user } = useAuth();
     // useLocation gives us the current URL so we can highlight the active link
     const location = useLocation();
 
@@ -71,7 +73,7 @@ function AdminSidebar() {
 
             {/* ── Navigation Links ── (scrollable if many items) */}
             <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
-                {NAV_ITEMS.map(({ label, path, Icon }) => {
+                {NAV_ITEMS.filter(item => item.allowedRoles.includes(user?.role || 'admin')).map(({ label, path, Icon }) => {
                     const active = isActive(path);
                     return (
                         <Link

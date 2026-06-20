@@ -10,6 +10,11 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchUser = async () => {
+    if (!localStorage.getItem('isLoggedIn')) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       const res = await api.get('/api/auth/me');
       if (res.data.success) {
@@ -29,12 +34,14 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData) => {
+    localStorage.setItem('isLoggedIn', 'true');
     setUser(userData);
   };
 
   const logout = async () => {
     try {
       await api.post('/api/auth/logout');
+      localStorage.removeItem('isLoggedIn');
       setUser(null);
     } catch (error) {
       console.error('Logout failed', error);

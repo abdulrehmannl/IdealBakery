@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useCart } from '../../context/CartContext';
 
 /**
  * ProductCard Component (Shared — used in all category pages)
@@ -25,6 +26,23 @@ import { Link } from 'react-router-dom';
  *   }
  */
 function ProductCard({ product }) {
+    const navigate = useNavigate();
+    const { addToCart } = useCart();
+
+    const handleOrderNow = () => {
+        // Strip out "Rs." and parse the number (since price in product card might be string, but cart expects number)
+        const parsedPrice = typeof product.price === 'string' ? Number(product.price.replace(/[^0-9.-]+/g,"")) : product.price;
+        
+        addToCart({
+            id: product.id,
+            name: product.name,
+            price: parsedPrice,
+            image: product.image
+        }, 1, 'Regular');
+        
+        navigate('/checkout');
+    };
+
     return (
         /*
          * The outer div is the card container.
@@ -105,12 +123,12 @@ function ProductCard({ product }) {
                     </Link>
 
                     {/* Order Now button (filled style) */}
-                    <Link
-                        to="/checkout"
-                        className="w-full px-4 py-2.5 bg-primary text-white font-bold text-sm tracking-wide hover:bg-[#6A1414] transition-colors rounded text-center"
+                    <button
+                        onClick={handleOrderNow}
+                        className="w-full px-4 py-2.5 bg-primary text-white font-bold text-sm tracking-wide hover:bg-[#6A1414] transition-colors rounded text-center block"
                     >
                         ORDER NOW
-                    </Link>
+                    </button>
 
                 </div>
             </div>
