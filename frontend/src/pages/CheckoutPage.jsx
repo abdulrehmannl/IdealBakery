@@ -29,9 +29,14 @@ function CheckoutPage() {
     // Which payment method is selected
     const [paymentMethod, setPaymentMethod] = useState('cod'); // 'cod' or 'online'
 
-    // Whether the order was successfully placed and its info
     const [orderPlaced, setOrderPlaced] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Discount code state
+    const [discountCode, setDiscountCode] = useState('');
+    const [appliedDiscount, setAppliedDiscount] = useState(null);
+    const [discountError, setDiscountError] = useState('');
+    const [isApplyingDiscount, setIsApplyingDiscount] = useState(false);
 
     // Handle input changes — updates the matching field in formData
     const handleInputChange = (e) => {
@@ -46,8 +51,37 @@ function CheckoutPage() {
 
     // Calculate order totals
     const subtotal = getCartTotal();
-    const deliveryFee = subtotal >= 1000 || subtotal === 0 ? 0 : 150; // Free delivery over Rs. 1000
-    const total = subtotal + deliveryFee;
+    
+    // Calculate discount amount
+    let discountAmount = 0;
+    if (appliedDiscount) {
+        if (appliedDiscount.discountType === 'percentage') {
+            discountAmount = subtotal * (appliedDiscount.value / 100);
+        } else if (appliedDiscount.discountType === 'flat') {
+            discountAmount = appliedDiscount.value;
+        }
+    }
+    
+    const discountedSubtotal = subtotal - discountAmount;
+    const deliveryFee = discountedSubtotal >= 1000 || discountedSubtotal === 0 ? 0 : 150; // Free delivery over Rs. 1000
+    const total = discountedSubtotal + deliveryFee;
+
+    const handleApplyDiscount = async () => {
+        if (!discountCode.trim()) return;
+        setIsApplyingDiscount(true);
+        setDiscountError('');
+        try {
+            const res = await api.post('/api/discounts/validate', { code: discountCode.trim() });
+            if (res.data.success) {
+                setAppliedDiscount(res.data.data);
+            }
+        } catch (err) {
+            setDiscountError(err.response?.data?.message || 'Invalid or expired code.');
+            setAppliedDiscount(null);
+        } finally {
+            setIsApplyingDiscount(false);
+        }
+    };
 
     // If cart is empty, redirect or show message
     if (cartItems.length === 0 && !orderPlaced) {
@@ -84,7 +118,8 @@ function CheckoutPage() {
                 phone: formData.phone,
                 customerName: formData.name,
                 orderType: 'delivery',
-                notes: formData.notes
+                notes: formData.notes,
+                discountCode: appliedDiscount ? appliedDiscount.title : null
             };
 
             const res = await api.post('/api/orders', orderPayload);
@@ -310,6 +345,12 @@ function CheckoutPage() {
                                         <span className="text-text-light">Subtotal</span>
                                         <span className="font-semibold text-text-dark">Rs. {subtotal.toLocaleString()}</span>
                                     </div>
+                                    {appliedDiscount && (
+                                        <div className="flex justify-between text-sm font-body text-green-600">
+                                            <span>Discount ({appliedDiscount.title})</span>
+                                            <span className="font-semibold">- Rs. {discountAmount.toLocaleString()}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between text-sm font-body">
                                         <span className="text-text-light flex items-center gap-1.5"><Truck size={13} /> Delivery</span>
                                         <span className={`font-semibold ${deliveryFee === 0 ? 'text-green-600' : 'text-text-dark'}`}>
@@ -317,13 +358,37 @@ function CheckoutPage() {
                                         </span>
                                     </div>
                                     {deliveryFee > 0 && (
-                                        <p className="text-xs text-text-light">Add Rs. {(1000 - subtotal).toLocaleString()} more for free delivery</p>
+                                        <p className="text-xs text-text-light">Add Rs. {(1000 - discountedSubtotal).toLocaleString()} more for free delivery</p>
                                     )}
                                     <div className="flex justify-between border-t border-border pt-3">
                                         <span className="font-bold text-text-dark">Total</span>
                                         <span className="font-heading font-bold text-xl text-primary">Rs. {total.toLocaleString()}</span>
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Discount Code */}
+                            <div className="bg-white rounded-2xl border border-border shadow-sm p-6">
+                                <h2 className="font-heading text-lg font-bold text-text-dark mb-3">Promo Code</h2>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={discountCode}
+                                        onChange={(e) => setDiscountCode(e.target.value)}
+                                        placeholder="Enter code"
+                                        className="flex-1 px-4 py-2 border border-border rounded-lg text-sm bg-secondary/30 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary uppercase"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleApplyDiscount}
+                                        disabled={isApplyingDiscount || !discountCode.trim()}
+                                        className="px-4 py-2 bg-text-dark text-white rounded-lg text-sm font-bold disabled:opacity-50"
+                                    >
+                                        {isApplyingDiscount ? '...' : 'APPLY'}
+                                    </button>
+                                </div>
+                                {discountError && <p className="text-red-500 text-xs mt-2">{discountError}</p>}
+                                {appliedDiscount && <p className="text-green-600 text-xs mt-2 font-bold">Discount applied!</p>}
                             </div>
 
                             {/* Place Order Button */}

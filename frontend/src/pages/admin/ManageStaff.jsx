@@ -6,7 +6,7 @@ const ROLES = ['manager', 'staff', 'delivery', 'admin'];
 const BRANCHES = ['6659c2522765874288b8131d', '6659c2522765874288b8131e']; // Need real branch IDs, but falling back to text if needed. Wait, in reality we should fetch branches. For now, the user uses 'Branch 1', 'Branch 2' text if branch is not populated, but the API expects an ObjectId. Let me fetch branches dynamically.
 
 const EMPTY_FORM = {
-  name: '', phone: '', password: '', role: 'staff', branch: '', isActive: true,
+  name: '', phone: '', password: '', role: 'staff', branch: '', isActive: true, jobTitle: ''
 };
 
 function ManageStaff() {
@@ -58,7 +58,8 @@ function ManageStaff() {
       phone: member.phone, 
       password: '', // Blank unless they want to change it
       role: member.role, 
-      branch: member.branch ? member.branch._id : (branches.length > 0 ? branches[0]._id : ''), 
+      jobTitle: member.jobTitle || '',
+      branch: member.branch ? (member.branch._id || member.branch) : (branches.length > 0 ? branches[0]._id : ''), 
       isActive: member.isActive 
     }); 
     setEditId(member._id); 
@@ -77,7 +78,7 @@ function ManageStaff() {
     try {
       if (editId) {
         // Update user
-        const updateData = { name: form.name, phone: form.phone, isActive: form.isActive };
+        const updateData = { name: form.name, phone: form.phone, isActive: form.isActive, jobTitle: form.jobTitle };
         if (form.password) updateData.password = form.password; // Only send if filled
         // Note: userController PUT /api/users/:id does not natively update role/branch, but let's send it anyway
         await api.put(`/api/users/${editId}`, updateData);
@@ -88,6 +89,7 @@ function ManageStaff() {
           phone: form.phone,
           password: form.password,
           role: form.role,
+          jobTitle: form.jobTitle,
           branch: form.branch
         });
       }
@@ -138,7 +140,7 @@ function ManageStaff() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-[#F5F0EB]">
-                {['Name', 'Phone', 'Role', 'Branch', 'Status', 'Actions'].map(h => (
+                {['Name', 'Phone', 'Role', 'Job Title', 'Branch', 'Status', 'Actions'].map(h => (
                   <th key={h} className="text-left px-4 py-3 font-bold text-text-light text-xs uppercase">{h}</th>
                 ))}
               </tr>
@@ -149,7 +151,10 @@ function ManageStaff() {
                   <td className="px-4 py-3 font-bold text-text-dark">{member.name}</td>
                   <td className="px-4 py-3 text-text-light text-xs">{member.phone}</td>
                   <td className="px-4 py-3 capitalize text-sm">{member.role}</td>
-                  <td className="px-4 py-3 text-text-light text-xs">{member.branch?.name || 'N/A'}</td>
+                  <td className="px-4 py-3 text-text-light text-xs">{member.jobTitle || '—'}</td>
+                  <td className="px-4 py-3 text-text-light text-xs">
+                    {member.branch?.name || branches.find(b => b._id === member.branch)?.name || 'N/A'}
+                  </td>
                   <td className="px-4 py-3">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${member.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                       {member.isActive ? 'Active' : 'Inactive'}
@@ -203,8 +208,6 @@ function ManageStaff() {
                 <input name="password" type="password" value={form.password} onChange={handleChange} required={!editId} className="w-full px-3 py-2 border border-border rounded-lg" />
               </div>
 
-              {!editId && (
-                <>
                   <div>
                     <label className="block text-xs font-bold text-text-light mb-1 uppercase">Role *</label>
                     <select name="role" value={form.role} onChange={handleChange} className="w-full px-3 py-2 border border-border rounded-lg">
@@ -219,8 +222,30 @@ function ManageStaff() {
                       {branches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
                     </select>
                   </div>
-                </>
-              )}
+
+                  <div>
+                    <label className="block text-xs font-bold text-text-light mb-1 uppercase">Job Title *</label>
+                    <input 
+                      name="jobTitle" 
+                      list="manage-staff-job-titles"
+                      value={form.jobTitle} 
+                      onChange={handleChange} 
+                      required 
+                      placeholder="e.g. Baker, Cashier, or type custom..."
+                      className="w-full px-3 py-2 border border-border rounded-lg" 
+                    />
+                    <datalist id="manage-staff-job-titles">
+                      <option value="Baker" />
+                      <option value="Chef" />
+                      <option value="Cashier" />
+                      <option value="Counter Staff" />
+                      <option value="Kitchen Helper" />
+                      <option value="Packer" />
+                      <option value="Cleaner" />
+                      <option value="Rider" />
+                      <option value="Driver" />
+                    </datalist>
+                  </div>
 
               {editId && (
                 <label className="flex items-center gap-2 cursor-pointer pt-2">

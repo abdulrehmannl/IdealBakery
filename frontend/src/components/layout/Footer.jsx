@@ -1,6 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../../utils/api';
 
 function Footer() {
+    const [branches, setBranches] = useState([]);
+
+    useEffect(() => {
+        const fetchBranches = async () => {
+            try {
+                const res = await api.get('/api/branches');
+                if (res.data.success) {
+                    setBranches(res.data.branches || res.data.data || []);
+                }
+            } catch (err) {
+                console.error('Failed to load branches:', err);
+            }
+        };
+        fetchBranches();
+    }, []);
+
     return (
         <>
             {/*
@@ -88,13 +105,22 @@ function Footer() {
             <div className="max-w-7xl mx-auto pt-10 text-center">
                 <h4 className="font-heading font-bold uppercase tracking-widest text-[#3E2723] text-lg mb-6">Neighborhood Cafes</h4>
                 <div className="flex flex-wrap justify-center items-center gap-3 text-xs font-bold tracking-widest text-[#3E2723]">
-                    <a href="#branch1" className="hover:text-primary">DAWOOD CHOWK</a>
-                    <span className="text-[#3E2723]/30">|</span>
-                    <a href="#branch2" className="hover:text-primary">ARRA TULLA ROAD</a>
-                    <span className="text-[#3E2723]/30">|</span>
-                    <a href="#branch3" className="hover:text-primary">MAIN CITY</a>
-                    <span className="text-[#3E2723]/30">|</span>
-                    <a href="#branch4" className="hover:text-primary">GULSHAN-E-IQBAL</a>
+                    {branches.length > 0 ? branches.map((b, idx) => (
+                        <React.Fragment key={b._id}>
+                            <a href="#branches" className="hover:text-primary uppercase">{b.name}</a>
+                            {idx < branches.length - 1 && <span className="text-[#3E2723]/30">|</span>}
+                        </React.Fragment>
+                    )) : (
+                        <>
+                            <a href="#branch1" className="hover:text-primary">DAWOOD CHOWK</a>
+                            <span className="text-[#3E2723]/30">|</span>
+                            <a href="#branch2" className="hover:text-primary">ARRA TULLA ROAD</a>
+                            <span className="text-[#3E2723]/30">|</span>
+                            <a href="#branch3" className="hover:text-primary">MAIN CITY</a>
+                            <span className="text-[#3E2723]/30">|</span>
+                            <a href="#branch4" className="hover:text-primary">GULSHAN-E-IQBAL</a>
+                        </>
+                    )}
                 </div>
             </div>
 

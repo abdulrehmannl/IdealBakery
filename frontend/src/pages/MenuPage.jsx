@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Search, Filter, ShoppingCart } from 'lucide-react';
 import api from '../utils/api';
 
 /**
@@ -30,23 +30,34 @@ function MenuPage() {
     }, [location.pathname]); // re-run if the path changes
 
     const [categories, setCategories] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('All');
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const fetchCategories = async () => {
+        const fetchData = async () => {
             try {
-                const res = await api.get('/api/categories');
-                if (res.data.success) {
-                    setCategories(res.data.data);
-                }
+                const [catRes, prodRes] = await Promise.all([
+                    api.get('/api/categories'),
+                    api.get('/api/products')
+                ]);
+                if (catRes.data.success) setCategories(catRes.data.data);
+                if (prodRes.data.success) setProducts(prodRes.data.data);
             } catch (err) {
-                console.error("Failed to fetch categories:", err);
+                console.error("Failed to fetch data:", err);
             } finally {
                 setIsLoading(false);
             }
         };
-        fetchCategories();
+        fetchData();
     }, []);
+
+    const filteredProducts = products.filter(p => {
+        const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = selectedCategory === 'All' || (p.category && p.category.name === selectedCategory);
+        return matchesSearch && matchesCategory;
+    });
 
     return (
         <div className="min-h-screen font-body" style={{ backgroundColor: '#F5F0EB' }}>
@@ -158,6 +169,110 @@ function MenuPage() {
                         ))}
                     </div>
 
+                </div>
+            </section>
+
+            {/* ══════════════════════════════════════════
+                SECTION 2.5: ALL PRODUCTS WITH SEARCH & FILTER
+            ══════════════════════════════════════════ */}
+            <section className="py-12 px-6 md:px-8 bg-white" id="all-products">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                        <h2 className="font-heading text-3xl font-bold text-text-dark">All Items</h2>
+                        
+                        <div className="flex items-center gap-4 w-full md:w-auto">
+                            <div className="relative flex-1 md:w-64">
+                                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-light" />
+                                <input
+                                    type="text"
+                                    placeholder="Search menu..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:border-primary"
+                                />
+                            </div>
+                            <div className="relative">
+                                <Filter size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-light" />
+                                <select
+                                    value={selectedCategory}
+                                    onChange={(e) => setSelectedCategory(e.target.value)}
+                                    className="pl-10 pr-8 py-2 border border-border rounded-lg text-sm focus:outline-none focus:border-primary appearance-none bg-white cursor-pointer"
+                                >
+                                    <option value="All">All Categories</option>
+                                    {categories.map(c => (
+                                        <option key={c._id} value={c.name}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {isLoading ? (
+                        <div className="text-center py-12 text-text-light">Loading menu...</div>
+                    ) : filteredProducts.length > 0 ? (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            {filteredProducts.map(product => (
+                                <Link
+                                    key={product._id}
+                                    to={`/product/${product._id}`}
+                                    className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-border/50 flex flex-col"
+                                >
+                                    <div className="h-48 overflow-hidden relative bg-secondary/30">
+                                        <img
+                                            src={product.image || 'https://via.placeholder.com/300?text=No+Image'}
+                                            alt={product.name}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                        {product.discount > 0 && (
+                                            <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">
+                                                -{product.discount}%
+                                            </div>
+                                        )}
+                                        {product.stock === 0 && (
+                                            <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+                                                <span className="bg-red-600 text-white font-bold px-4 py-1.5 rounded-full text-sm shadow-md rotate-[-12deg]">
+                                                    SOLD OUT
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="p-4 flex flex-col flex-1">
+                                        <div className="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">
+                                            {product.category?.name || 'Uncategorized'}
+                                        </div>
+                                        <h3 className="font-heading font-bold text-text-dark leading-tight mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                                            {product.name}
+                                        </h3>
+                                        <div className="mt-auto flex items-center justify-between">
+                                            <div>
+                                                {product.discount > 0 ? (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-text-light line-through text-xs">Rs. {product.price}</span>
+                                                        <span className="font-bold text-primary">Rs. {product.price - (product.price * (product.discount / 100))}</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="font-bold text-primary">Rs. {product.price}</span>
+                                                )}
+                                            </div>
+                                            <button
+                                                className="w-8 h-8 rounded-full bg-secondary text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
+                                                onClick={(e) => {
+                                                    e.preventDefault(); // prevent navigation
+                                                    // TODO: Add to cart logic here if needed, or rely on Product Detail Page
+                                                }}
+                                            >
+                                                <ShoppingCart size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-12 text-text-light bg-secondary/30 rounded-xl">
+                            No items found matching your search.
+                        </div>
+                    )}
                 </div>
             </section>
 

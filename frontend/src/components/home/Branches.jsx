@@ -59,7 +59,7 @@ function Branches() {
                                     </div>
                                     <div className="flex items-start gap-3">
                                         <Clock size={18} className="shrink-0 mt-0.5 text-text-dark" />
-                                        <span>{branch.timing}</span>
+                                        <span>{branch.openingHours}</span>
                                     </div>
                                     <div className="flex items-start gap-3">
                                         <Phone size={18} className="shrink-0 mt-0.5 text-text-dark" />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, X } from 'lucide-react';
+import { Eye, X, RefreshCw } from 'lucide-react';
 import api from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 
 /**
  * ManageOrders Page
@@ -134,7 +135,7 @@ const INITIAL_ORDERS = [
 
 // ── All possible order statuses ────────────────────────────────────────────────
 // The dropdown on each row will show these options for the admin to pick from
-const ALL_STATUSES = ['Pending', 'Confirmed', 'Preparing', 'Delivered', 'Cancelled'];
+const ALL_STATUSES = ['Pending', 'Confirmed', 'Preparing', 'Out_for_delivery', 'Delivered', 'Cancelled'];
 
 // ── Filter tabs at the top ─────────────────────────────────────────────────────
 const FILTER_TABS = ['All', ...ALL_STATUSES];
@@ -145,6 +146,7 @@ const STATUS_COLORS = {
   Pending:   'bg-yellow-100 text-yellow-700 border border-yellow-200',
   Confirmed: 'bg-blue-100   text-blue-700   border border-blue-200',
   Preparing: 'bg-orange-100 text-orange-700 border border-orange-200',
+  Out_for_delivery: 'bg-purple-100 text-purple-700 border border-purple-200',
   Delivered: 'bg-green-100  text-green-700  border border-green-200',
   Cancelled: 'bg-red-100    text-red-600    border border-red-200',
 };
@@ -162,6 +164,21 @@ function ManageOrders() {
   const [activeTab, setActiveTab]     = useState('All');  // current filter tab
   const [viewOrder, setViewOrder]     = useState(null);   // order shown in detail modal
   const [isLoading, setIsLoading]     = useState(true);
+  const [deliveryStaff, setDeliveryStaff] = useState([]);
+  
+  // Need to know current user's role to restrict UI
+  const { user } = useAuth();
+
+  const fetchDeliveryStaff = async () => {
+    try {
+      const res = await api.get('/api/users?role=delivery');
+      if (res.data.success) {
+        setDeliveryStaff(res.data.users);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -175,6 +192,7 @@ function ManageOrders() {
           phone: o.customer ? o.customer.phone : 'N/A',
           branch: o.branch ? (o.branch.name || o.branch) : 'N/A',
           items: o.items || [],
+          assignedTo: o.assignedTo ? o.assignedTo._id : '',
           date: new Date(o.createdAt).toLocaleDateString(),
           time: new Date(o.createdAt).toLocaleTimeString()
         })));
@@ -186,7 +204,12 @@ function ManageOrders() {
     }
   };
 
-  useEffect(() => { fetchOrders(); }, []);
+  useEffect(() => {
+    fetchOrders();
+    fetchDeliveryStaff();
+    const interval = setInterval(fetchOrders, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // ── Derived: filtered orders based on active tab ───────────────────────────
   const filtered = activeTab === 'All'
@@ -208,6 +231,17 @@ function ManageOrders() {
     }
   };
 
+  const assignDelivery = async (orderId, staffId) => {
+    try {
+      await api.put(`/api/orders/${orderId}/assign`, { assignedTo: staffId || null });
+      setOrders(prev =>
+        prev.map(o => o.id === orderId ? { ...o, assignedTo: staffId } : o)
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // ── Count per tab (shows numbers on filter tabs) ───────────────────────────
   const countByStatus = (tab) => {
     if (tab === 'All') return orders.length;
@@ -221,7 +255,8 @@ function ManageOrders() {
       {/* ══════════════════════════════════════════════════════════════════════
           FILTER TABS — All / Pending / Confirmed / Preparing / Delivered / Cancelled
       ══════════════════════════════════════════════════════════════════════ */}
-      <div className="flex items-center gap-1 flex-wrap bg-white border border-border rounded-xl p-1.5 w-fit shadow-sm">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-1 flex-wrap bg-white border border-border rounded-xl p-1.5 w-fit shadow-sm">
         {FILTER_TABS.map(tab => (
           <button
             key={tab}
@@ -245,6 +280,14 @@ function ManageOrders() {
             </span>
           </button>
         ))}
+        </div>
+        <button
+          onClick={fetchOrders}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-border rounded-lg text-sm font-bold text-text-dark hover:bg-secondary hover:text-primary transition-colors shadow-sm"
+        >
+          <RefreshCw size={16} className={isLoading ? "animate-spin text-primary" : "text-primary"} />
+          Refresh
+        </button>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
@@ -255,7 +298,7 @@ function ManageOrders() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border" style={{ backgroundColor: '#F5F0EB' }}>
-                {['Order ID', 'Customer', 'Branch', 'Items', 'Total', 'Type', 'Payment', 'Status', 'Date', 'Actions'].map(h => (
+                {['Order ID', 'Customer', 'Branch', 'Items', 'Total', 'Type', 'Payment', 'Assign', 'Status', 'Date', 'Actions'].map(h => (
                   <th key={h} className="text-left px-4 py-3 font-bold text-text-light text-xs tracking-wide uppercase whitespace-nowrap">
                     {h}
                   </th>
@@ -304,25 +347,47 @@ function ManageOrders() {
                     </span>
                   </td>
 
-                  {/* ── Status dropdown ──
-                      Admin can change the order status directly from this dropdown.
-                      TODO: On change → PUT /api/orders/:id/status
-                  */}
+                  {/* Delivery Assignment */}
+                  <td className="px-4 py-3">
+                    {user?.role === 'delivery' ? (
+                      <span className="text-xs font-bold px-2 py-1 bg-gray-100 text-gray-700 rounded-lg">
+                        Assigned to you
+                      </span>
+                    ) : (
+                      <select
+                        value={order.assignedTo || ''}
+                        onChange={e => assignDelivery(order.id, e.target.value)}
+                        className="text-xs font-bold px-2 py-1 rounded-lg border focus:outline-none cursor-pointer border-gray-200 bg-white"
+                        disabled={order.orderType === 'Pickup' || order.orderType === 'Dine-in'}
+                      >
+                        <option value="">Unassigned</option>
+                        {deliveryStaff.map(staff => (
+                          <option key={staff._id} value={staff._id}>{staff.name}</option>
+                        ))}
+                      </select>
+                    )}
+                  </td>
+
+                  {/* ── Status dropdown ── */}
                   <td className="px-4 py-3">
                     <select
                       value={order.status}
                       onChange={e => updateStatus(order.id, e.target.value)}
                       className={`text-xs font-bold px-2 py-1 rounded-lg border focus:outline-none cursor-pointer
-                        ${order.status === 'Delivered' ? 'border-green-200 bg-green-50 text-green-700' :
-                          order.status === 'Cancelled' ? 'border-red-200 bg-red-50 text-red-600' :
-                          order.status === 'Pending'   ? 'border-yellow-200 bg-yellow-50 text-yellow-700' :
-                          order.status === 'Confirmed' ? 'border-blue-200 bg-blue-50 text-blue-700' :
-                          'border-orange-200 bg-orange-50 text-orange-700'}
+                        ${STATUS_COLORS[order.status] || 'border-gray-200 bg-gray-50 text-gray-700'}
                       `}
                     >
-                      {ALL_STATUSES.map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
+                      {user?.role === 'delivery' ? (
+                        <>
+                           <option value={order.status} hidden>{order.status}</option>
+                           <option value="Out_for_delivery">Out for delivery</option>
+                           <option value="Delivered">Delivered</option>
+                        </>
+                      ) : (
+                        ALL_STATUSES.map(s => (
+                          <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                        ))
+                      )}
                     </select>
                   </td>
 

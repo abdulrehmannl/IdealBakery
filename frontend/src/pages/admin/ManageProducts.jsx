@@ -110,6 +110,26 @@ const ManageProducts = () => {
         setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     };
 
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+            const res = await api.post('/api/products/upload-image', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            if (res.data.success) {
+                setForm(prev => ({ ...prev, image: res.data.url }));
+            }
+        } catch (err) {
+            console.error('Image upload failed', err);
+            alert('Failed to upload image.');
+        }
+    };
+
     // ── Submit form (Add or Edit) ──
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -190,11 +210,14 @@ const ManageProducts = () => {
                         </thead>
                         <tbody className="divide-y divide-border">
                             {filtered.map(product => (
-                                <tr key={product.id} className="hover:bg-secondary/20 transition-colors">
+                                <tr key={product.id} className={`hover:bg-secondary/20 transition-colors ${product.stock < 10 ? 'bg-red-50 border-l-4 border-l-red-500' : ''}`}>
                                     <td className="px-4 py-3">
                                         <img src={product.image} alt={product.name} className="w-10 h-10 rounded-lg object-cover border border-border" />
                                     </td>
-                                    <td className="px-4 py-3 font-bold text-text-dark whitespace-nowrap">{product.name}</td>
+                                    <td className="px-4 py-3 font-bold text-text-dark whitespace-nowrap">
+                                        {product.name}
+                                        {product.stock < 10 && <span className="ml-2 text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded uppercase tracking-wider">Low Stock</span>}
+                                    </td>
                                     <td className="px-4 py-3 text-text-light text-xs">{product.category}</td>
                                     <td className="px-4 py-3 font-semibold">Rs. {product.price}</td>
                                     <td className="px-4 py-3 text-text-light">{product.discount}%</td>
@@ -304,9 +327,16 @@ const ManageProducts = () => {
                             </div>
                             {/* Image URL */}
                             <div className="col-span-2">
-                                <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Image URL</label>
-                                <input name="image" value={form.image} onChange={handleChange} placeholder="https://..."
-                                    className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                                <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Product Image</label>
+                                <div className="flex items-center gap-3">
+                                    <input name="image" value={form.image} onChange={handleChange} placeholder="Image URL (or upload below)"
+                                        className="flex-1 px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                                    <label className="cursor-pointer px-4 py-2.5 bg-secondary text-primary font-bold text-sm rounded-lg hover:bg-primary/10 transition-colors border border-primary/20">
+                                        Upload
+                                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                                    </label>
+                                </div>
+                                {form.image && <img src={form.image} alt="Preview" className="mt-3 w-20 h-20 object-cover rounded-lg border border-border" />}
                             </div>
                             {/* Toggles */}
                             <div className="flex items-center gap-6 col-span-2">

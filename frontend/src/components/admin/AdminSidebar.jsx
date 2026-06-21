@@ -27,7 +27,7 @@ const NAV_ITEMS = [
     { label: 'Orders',        path: '/admin/orders',     Icon: ShoppingBag,     allowedRoles: ['admin', 'manager', 'staff', 'delivery'] },
     { label: 'Staff',         path: '/admin/staff',      Icon: Users,           allowedRoles: ['admin', 'manager'] },
     { label: 'Attendance',    path: '/admin/attendance', Icon: Calendar,        allowedRoles: ['admin', 'manager', 'staff'] },
-    { label: 'Salaries',      path: '/admin/salaries',   Icon: DollarSign,      allowedRoles: ['admin'] },
+    { label: 'Salaries',      path: '/admin/salaries',   Icon: DollarSign,      allowedRoles: ['admin', 'manager'] },
     { label: 'Inventory',     path: '/admin/inventory',  Icon: Archive,         allowedRoles: ['admin', 'manager'] },
     { label: 'Machinery',     path: '/admin/machinery',  Icon: Settings,        allowedRoles: ['admin', 'manager'] },
     { label: 'Counter Sales', path: '/admin/counter',    Icon: Monitor,         allowedRoles: ['admin', 'manager', 'staff'] },

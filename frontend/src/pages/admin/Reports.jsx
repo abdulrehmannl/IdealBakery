@@ -47,6 +47,28 @@ function Reports() {
           ]
         };
       case 'attendance':
+        const headers = ['Status', 'Count'];
+        let rows = [
+            ['Present', dataObj.present || 0],
+            ['Absent', dataObj.absent || 0],
+            ['Late', dataObj.late || 0],
+            ['Half-day', dataObj.halfday || 0],
+        ];
+
+        if (dataObj.byJobTitle) {
+          headers.push('Breakdown by Job Title');
+          rows = Object.keys(dataObj.byJobTitle).map(title => {
+            const counts = dataObj.byJobTitle[title];
+            return [
+              title, 
+              (counts.present + counts.absent + counts.late + counts.halfday),
+              `P: ${counts.present} | A: ${counts.absent} | L: ${counts.late}`
+            ];
+          });
+          // Update headers to match
+          headers.splice(0, headers.length, 'Job Title', 'Total Records', 'Breakdown (P/A/L)');
+        }
+
         return {
           summary: [
             { label: 'Total Records', value: dataObj.totalRecords || 0 },
@@ -54,13 +76,8 @@ function Reports() {
             { label: 'Absent',        value: dataObj.absent || 0 },
             { label: 'Late',          value: dataObj.late || 0 },
           ],
-          headers: ['Status', 'Count'],
-          rows: [
-            ['Present', dataObj.present || 0],
-            ['Absent', dataObj.absent || 0],
-            ['Late', dataObj.late || 0],
-            ['Half-day', dataObj.halfday || 0],
-          ]
+          headers,
+          rows
         };
       case 'inventory':
         return {
@@ -197,13 +214,48 @@ function Reports() {
         ))}
       </div>
 
-      {/* ── Chart Placeholder ── */}
-      {/* TODO: Replace this div with a real Chart.js or Recharts chart later */}
-      <div className="bg-white rounded-xl border border-border shadow-sm p-6 text-center">
-        <div className="h-48 flex flex-col items-center justify-center gap-3 bg-secondary/30 rounded-lg border-2 border-dashed border-border">
-          <BarChart2 size={40} className="text-text-light opacity-40" />
-          <p className="text-text-light font-bold text-sm">Chart will appear here</p>
-          <p className="text-text-light text-xs">Chart.js integration coming in a future update</p>
+      {/* ── Simple CSS Bar Chart ── */}
+      <div className="bg-white rounded-xl border border-border shadow-sm p-6">
+        <h3 className="font-heading font-bold text-base text-text-dark mb-6">{activeTab} Chart</h3>
+        <div className="h-64 flex items-end justify-around gap-2 bg-secondary/10 rounded-lg p-4 border border-border/50 relative pt-10">
+          {reportData.rows.length === 0 ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-text-light">
+               <BarChart2 size={40} className="opacity-40 mb-2" />
+               <p className="font-bold text-sm">No data to display</p>
+            </div>
+          ) : (
+            (() => {
+              // Extract numeric values from rows (assuming second column is a number or value)
+              const chartData = reportData.rows.map(row => {
+                let val = String(row[1] || row[0] || 0); // fallback to col 0 if needed
+                let num = parseFloat(val.replace(/[^0-9.]/g, ''));
+                if (isNaN(num)) num = 0;
+                return { label: row[0], value: num, raw: row[1] || row[0] };
+              });
+              
+              const maxVal = Math.max(...chartData.map(d => d.value), 1);
+              
+              return chartData.map((d, i) => {
+                const heightPercent = (d.value / maxVal) * 100;
+                return (
+                  <div key={i} className="flex flex-col items-center justify-end w-full max-w-[60px] group h-full relative">
+                    <div className="absolute -top-6 bg-text-dark text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
+                      {d.label}: {d.raw}
+                    </div>
+                    <div 
+                      className="w-full bg-primary rounded-t-sm transition-all duration-500 ease-out hover:bg-[#6A1414] shadow-sm relative overflow-hidden" 
+                      style={{ height: `${heightPercent}%`, minHeight: '4px' }}
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    </div>
+                    <span className="text-[10px] font-bold text-text-light mt-3 truncate w-full text-center" title={d.label}>
+                      {String(d.label).substring(0, 10)}{String(d.label).length > 10 ? '...' : ''}
+                    </span>
+                  </div>
+                );
+              });
+            })()
+          )}
         </div>
       </div>
 

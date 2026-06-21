@@ -60,6 +60,21 @@ function AdminDashboard() {
         <div className="space-y-6">
 
             {/* ══════════════════════════════════════════
+                SECTION 0: LOW STOCK BANNER
+            ══════════════════════════════════════════ */}
+            {stats.lowStock && stats.lowStock.length > 0 && (
+                <div className="bg-red-50 border-l-4 border-red-600 p-4 rounded-r-lg flex items-start gap-3 shadow-sm mb-6">
+                    <AlertTriangle className="text-red-600 shrink-0 mt-0.5" size={20} />
+                    <div>
+                        <h3 className="font-bold text-red-800 text-sm">Low Stock Alert ({stats.lowStock.length} items)</h3>
+                        <p className="text-xs text-red-700 mt-1">
+                            {stats.lowStock.map(p => `${p.name} (${p.stock} left)`).join(', ')}
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* ══════════════════════════════════════════
                 SECTION 1: STATS CARDS (Top Row)
             ══════════════════════════════════════════ */}
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">

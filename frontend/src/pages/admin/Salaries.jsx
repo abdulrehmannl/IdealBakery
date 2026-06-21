@@ -55,7 +55,8 @@ function Salaries() {
           id: s._id,
           staffName: s.staff?.name || 'Unknown',
           role: s.staff?.role || 'Staff',
-          branch: s.staff?.branch || 'Branch'
+          jobTitle: s.staff?.jobTitle || '',
+          branch: s.staff?.branch?.name || 'Unknown Branch'
         })));
       }
     } catch (err) {
@@ -156,7 +157,7 @@ function Salaries() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border" style={{ backgroundColor: '#F5F0EB' }}>
-                {['Staff Name', 'Role', 'Branch', 'Basic Salary', 'Bonus', 'Deductions', 'Net Salary', 'Status', 'Action'].map(h => (
+                {['Staff Name', 'Role', 'Job Title', 'Branch', 'Basic Salary', 'Bonus', 'Deductions', 'Net Salary', 'Status', 'Action'].map(h => (
                   <th key={h} className="text-left px-4 py-3 font-bold text-text-light text-xs tracking-wide uppercase whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -173,6 +174,9 @@ function Salaries() {
 
                     {/* Role */}
                     <td className="px-4 py-3 text-text-light text-xs capitalize">{s.role}</td>
+
+                    {/* Job Title */}
+                    <td className="px-4 py-3 text-text-light text-xs">{s.jobTitle || '—'}</td>
 
                     {/* Branch */}
                     <td className="px-4 py-3 text-text-light text-xs">{s.branch}</td>

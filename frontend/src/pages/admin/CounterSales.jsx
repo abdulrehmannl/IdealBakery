@@ -156,7 +156,7 @@ function CounterSales() {
   const completeSale = async () => {
     if (orderItems.length === 0) return;
     try {
-      await api.post('/api/counter-sales', {
+      await api.post('/api/counter', {
         items: orderItems.map(i => ({ product: i.id, qty: i.qty, price: i.price, name: i.name })),
         totalAmount: total,
         paymentMethod

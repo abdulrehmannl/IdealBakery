@@ -156,8 +156,8 @@ function ManageUsers() {
         setFormError('');
 
         // Client-side validation
-        if (!form.name.trim() || !form.phone.trim() || !form.role || !form.branch) {
-            setFormError('Name, phone, role, and branch are required.');
+        if (!form.name.trim() || !form.phone.trim() || !form.role || !form.branch || !form.jobTitle.trim()) {
+            setFormError('Name, phone, role, branch, and Job Title are required.');
             return;
         }
         if (!editId) {
@@ -502,9 +502,27 @@ function ManageUsers() {
                             </Field>
 
                             {/* Job Title */}
-                            <Field label="Job Title">
-                                <input name="jobTitle" value={form.jobTitle} onChange={handleChange}
-                                    className={INPUT} placeholder="e.g. Cashier" />
+                            <Field label="Job Title" required>
+                                <input 
+                                    name="jobTitle" 
+                                    list="job-titles"
+                                    value={form.jobTitle} 
+                                    onChange={handleChange}
+                                    required
+                                    className={INPUT} 
+                                    placeholder="e.g. Baker, Cashier, or type custom..." 
+                                />
+                                <datalist id="job-titles">
+                                    <option value="Baker" />
+                                    <option value="Chef" />
+                                    <option value="Cashier" />
+                                    <option value="Counter Staff" />
+                                    <option value="Kitchen Helper" />
+                                    <option value="Packer" />
+                                    <option value="Cleaner" />
+                                    <option value="Rider" />
+                                    <option value="Driver" />
+                                </datalist>
                             </Field>
 
 
