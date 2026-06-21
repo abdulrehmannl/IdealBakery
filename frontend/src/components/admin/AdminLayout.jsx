@@ -1,6 +1,7 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
+import { useAuth } from '../../context/AuthContext';
 
 /**
  * AdminLayout Component
@@ -41,9 +42,19 @@ const PAGE_TITLES = {
 };
 
 function AdminLayout({ children }) {
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+
     // Get the current path to look up the page title
     const location = useLocation();
     const pageTitle = PAGE_TITLES[location.pathname] || 'Admin Panel';
+
+    const branchName = user?.role === 'admin' ? 'All Branches' : (user?.branch?.name || 'No Branch Assigned');
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
+    };
 
     // Current date string for display in the top bar
     const today = new Date().toLocaleDateString('en-PK', {
@@ -83,17 +94,30 @@ function AdminLayout({ children }) {
                     <h1 className="font-heading font-bold text-xl text-text-dark">
                         {pageTitle}
                     </h1>
-                    {/* Right: Today's date + admin badge */}
+                    {/* Right: Today's date + branch badge + user info */}
                     <div className="flex items-center gap-4">
-                        <span className="font-body text-sm text-text-light hidden md:block">{today}</span>
+                        <span className="font-body text-sm text-text-light hidden lg:block">{today}</span>
+                        
+                        {/* ── Branch Badge ── */}
+                        <div className="px-3 py-1 bg-[#F5F0EB] border border-[#8B1A1A]/20 text-[#8B1A1A] text-xs font-bold rounded-full flex items-center gap-1 shadow-sm uppercase tracking-wide">
+                            {branchName} <span role="img" aria-label="store">🏪</span>
+                        </div>
+
                         <div className="flex items-center gap-2">
                             {/* Simple avatar circle with initial */}
                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm"
                                 style={{ backgroundColor: '#8B1A1A' }}>
-                                A
+                                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                             </div>
-                            <span className="text-sm font-semibold text-text-dark hidden sm:block">Admin</span>
+                            <span className="text-sm font-semibold text-text-dark hidden sm:block">Hi, {user?.name?.split(' ')[0] || 'User'}</span>
                         </div>
+
+                        <button 
+                            onClick={handleLogout} 
+                            className="text-xs text-text-light hover:text-[#8B1A1A] font-bold transition-colors ml-2"
+                        >
+                            Logout
+                        </button>
                     </div>
                 </header>
 

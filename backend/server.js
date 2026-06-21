@@ -111,7 +111,13 @@ app.use(cors({
 
 // ── 5b. Helmet — secure HTTP headers ──
 app.use(helmet({
-    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    contentSecurityPolicy: {
+        directives: {
+            ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+            'img-src': ["'self'", 'data:', 'https://lh3.googleusercontent.com', 'https://images.unsplash.com'],
+        },
+    },
 }));
 // Sets 15+ security-related HTTP response headers automatically.
 // Protects against clickjacking, MIME sniffing, XSS via headers, etc.

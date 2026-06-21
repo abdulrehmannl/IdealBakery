@@ -43,7 +43,9 @@ function Navbar() {
 
                 {user ? (
                     <div className="flex items-center gap-4">
-                        <span className="font-nav text-sm font-bold text-text-dark">Hi, {user.name}</span>
+                        <Link to="/profile" className="font-nav text-sm font-bold text-text-dark hover:text-primary transition-colors">
+                            Hi, {user.name}
+                        </Link>
                         {(user.role === 'admin' || user.role === 'manager') && (
                             <Link to="/admin" className={navLinkClass('/admin')}>DASHBOARD</Link>
                         )}

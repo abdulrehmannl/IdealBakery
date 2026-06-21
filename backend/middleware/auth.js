@@ -59,7 +59,7 @@ const protect = async (req, res, next) => {
         // decoded = { id: '...', role: 'admin', iat: ..., exp: ... }
 
         // ── Step 3: Fetch the user from MongoDB ──
-        const user = await User.findById(decoded.id).select('-password');
+        const user = await User.findById(decoded.id).select('-password').populate('branch', 'name');
 
         if (!user) {
             return res.status(401).json({
@@ -118,7 +118,7 @@ const optionalAuth = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id).select('-password');
+        const user = await User.findById(decoded.id).select('-password').populate('branch', 'name');
         
         req.user = user && user.isActive ? user : null;
         next();

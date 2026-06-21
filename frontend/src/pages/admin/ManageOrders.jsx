@@ -438,8 +438,8 @@ function ManageOrders() {
                     <tbody className="divide-y divide-border">
                       {(viewOrder.items || []).map((item, i) => (
                         <tr key={i}>
-                          <td className="px-4 py-2.5 font-semibold text-text-dark">{item.name}</td>
-                          <td className="px-4 py-2.5 text-center text-text-light">×{item.qty}</td>
+                          <td className="px-4 py-2.5 font-semibold text-text-dark">{item.productName || item.product?.name || 'Unknown Item'}</td>
+                          <td className="px-4 py-2.5 text-center text-text-light">×{item.quantity || 1}</td>
                           <td className="px-4 py-2.5 text-right font-bold text-text-dark">
                             Rs. {item.price.toLocaleString()}
                           </td>

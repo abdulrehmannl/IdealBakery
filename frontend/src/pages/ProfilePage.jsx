@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 import { User, Mail, Phone, ShoppingBag, Edit2, Save, LogOut, Package, ChevronRight } from 'lucide-react';
 
 /**
@@ -20,56 +21,54 @@ function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    const [userData, setUserData] = useState(null);
+    const { user, logout, loading: authLoading } = useAuth();
     const [orders, setOrders] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingOrders, setIsLoadingOrders] = useState(true);
     const navigate = useNavigate();
 
+    const [editData, setEditData] = useState({ name: '', phone: '' });
+
     useEffect(() => {
-        const fetchProfileData = async () => {
+        if (user) {
+            setEditData({
+                name: user.name || '',
+                phone: user.phone || '',
+            });
+        }
+    }, [user]);
+
+    useEffect(() => {
+        const fetchOrders = async () => {
+            if (!user) {
+                setIsLoadingOrders(false);
+                return;
+            }
             try {
-                // Fetch profile
-                const profileRes = await api.get('/api/auth/me');
-                if (profileRes.data.success) {
-                    setUserData({
-                        id: profileRes.data.data._id,
-                        name: profileRes.data.data.name,
-                        email: profileRes.data.data.email || 'No email provided',
-                        phone: profileRes.data.data.phone || 'No phone provided',
-                    });
-                    setEditData({
-                        name: profileRes.data.data.name,
-                        phone: profileRes.data.data.phone || '',
-                    });
-                }
-                
                 // Fetch orders
                 const ordersRes = await api.get('/api/orders/my-orders');
                 if (ordersRes.data.success) {
                     setOrders(ordersRes.data.data);
                 }
             } catch (err) {
-                console.error("Failed to load profile data:", err);
-                // If unauthorized, could redirect to login here
+                console.error("Failed to load orders:", err);
             } finally {
-                setIsLoading(false);
+                setIsLoadingOrders(false);
             }
         };
-        fetchProfileData();
-    }, []);
-
-    const [editData, setEditData] = useState({ name: '', phone: '' });
+        
+        fetchOrders();
+    }, [user]);
 
     // Handle save
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            // Note: Update user endpoint might be /api/users/:id but the user needs their ID.
-            // Using userData.id if the endpoint allows user to update themselves.
-            const res = await api.put(`/api/users/${userData.id}`, editData);
+            // Update user endpoint might be /api/users/:id but the user needs their ID.
+            const res = await api.put(`/api/users/${user.id}`, editData);
             if (res.data.success) {
-                setUserData(prev => ({ ...prev, ...editData }));
+                // Note: AuthContext state won't instantly update unless we refresh it
                 setIsEditing(false);
+                window.location.reload(); // Quick hack to refresh auth state
             }
         } catch (err) {
             console.error('Failed to update profile', err);
@@ -80,7 +79,9 @@ function ProfilePage() {
 
     // Cancel edits — revert editData to the last saved userData
     const handleCancel = () => {
-        setEditData({ name: userData.name, phone: userData.phone });
+        if (user) {
+            setEditData({ name: user.name || '', phone: user.phone || '' });
+        }
         setIsEditing(false);
     };
 
@@ -93,8 +94,8 @@ function ProfilePage() {
         }
     };
 
-    if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#F5F0EB]"><p className="font-bold text-lg text-text-light">Loading Profile...</p></div>;
-    if (!userData) return <div className="min-h-screen flex items-center justify-center bg-[#F5F0EB]"><p className="font-bold text-lg text-text-light">Please log in to view profile.</p></div>;
+    if (authLoading || (user && isLoadingOrders)) return <div className="min-h-screen flex items-center justify-center bg-[#F5F0EB]"><p className="font-bold text-lg text-text-light">Loading Profile...</p></div>;
+    if (!user) return <div className="min-h-screen flex items-center justify-center bg-[#F5F0EB]"><p className="font-bold text-lg text-text-light">Please log in to view profile.</p></div>;
 
     return (
         <div className="min-h-screen font-body py-10 px-4 md:px-8" style={{ backgroundColor: '#F5F0EB' }}>
@@ -107,16 +108,19 @@ function ProfilePage() {
 
                     {/* Maroon header banner */}
                     <div className="bg-primary px-6 py-6 flex items-center gap-4">
-                        {/* Avatar circle with initials */}
-                        <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center shrink-0 border-2 border-white/40">
-                            <span className="font-heading font-bold text-2xl text-white">
-                                {/* Show first letter of the user's name */}
-                                {userData.name.charAt(0).toUpperCase()}
-                            </span>
+                        {/* Avatar circle */}
+                        <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center shrink-0 border-2 border-white/40 overflow-hidden">
+                            {user.photoURL ? (
+                                <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="font-heading font-bold text-2xl text-white">
+                                    {user.name.charAt(0).toUpperCase()}
+                                </span>
+                            )}
                         </div>
                         <div>
-                            <h1 className="font-heading text-2xl font-bold text-white">{userData.name}</h1>
-                            <p className="text-white/70 text-sm font-body">{userData.email}</p>
+                            <h1 className="font-heading text-2xl font-bold text-white">{user.name}</h1>
+                            <p className="text-white/70 text-sm font-body">{user.email}</p>
                         </div>
                         {/* Edit/Save buttons in top-right */}
                         <div className="ml-auto flex gap-2">
@@ -169,7 +173,7 @@ function ProfilePage() {
                                     className="w-full px-4 py-2.5 border border-border rounded-lg text-sm bg-secondary/30 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                                 />
                             ) : (
-                                <p className="font-semibold text-text-dark">{userData.name}</p>
+                                <p className="font-semibold text-text-dark">{user.name}</p>
                             )}
                         </div>
 
@@ -178,7 +182,7 @@ function ProfilePage() {
                             <label className="flex items-center gap-2 text-xs font-bold text-text-light tracking-widest uppercase mb-2">
                                 <Mail size={13} /> Email Address
                             </label>
-                            <p className="font-semibold text-text-dark">{userData.email}</p>
+                            <p className="font-semibold text-text-dark">{user.email || 'No email provided'}</p>
                             <p className="text-xs text-text-light mt-0.5">Email cannot be changed</p>
                         </div>
 
@@ -195,7 +199,7 @@ function ProfilePage() {
                                     className="w-full px-4 py-2.5 border border-border rounded-lg text-sm bg-secondary/30 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                                 />
                             ) : (
-                                <p className="font-semibold text-text-dark">{userData.phone}</p>
+                                <p className="font-semibold text-text-dark">{user.phone || 'No phone provided'}</p>
                             )}
                         </div>
 
@@ -252,12 +256,6 @@ function ProfilePage() {
                                     <span className="font-heading font-bold text-lg text-primary">
                                         Rs. {order.totalAmount?.toLocaleString() || 0}
                                     </span>
-                                    <button
-                                        onClick={() => console.log('Reorder (dummy):', order._id)}
-                                        className="px-4 py-2 border-2 border-primary text-primary text-xs font-bold rounded-lg hover:bg-primary hover:text-white transition-colors"
-                                    >
-                                        REORDER
-                                    </button>
                                 </div>
                             </div>
                         ))}

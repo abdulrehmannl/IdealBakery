@@ -98,10 +98,11 @@ const createOrder = async (req, res, next) => {
         // ── Step 2: Build OrderItem documents from items array ──
         // Each item gets the new order's _id attached
         const orderItemDocs = items.map(item => ({
-            order:    order._id,
-            product:  item.product,
-            quantity: item.quantity,
-            price:    item.price,
+            order:       order._id,
+            product:     item.product || undefined,
+            productName: item.productName || 'Unknown Product',
+            quantity:    item.quantity,
+            price:       item.price,
         }));
 
         // ── Step 3: Save all order items in one batch ──

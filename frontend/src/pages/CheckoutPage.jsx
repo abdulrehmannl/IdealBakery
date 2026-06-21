@@ -69,11 +69,15 @@ function CheckoutPage() {
 
         try {
             const orderPayload = {
-                items: cartItems.map(item => ({
-                    product: item.id,
-                    quantity: item.quantity,
-                    price: item.price
-                })),
+                items: cartItems.map(item => {
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(String(item.id));
+                    return {
+                        product: isObjectId ? item.id : null,
+                        productName: item.name,
+                        quantity: item.quantity,
+                        price: item.price
+                    };
+                }),
                 totalAmount: total,
                 paymentMethod: paymentMethod === 'cod' ? 'cash' : 'online',
                 address: `${formData.address}, ${formData.city}`,
