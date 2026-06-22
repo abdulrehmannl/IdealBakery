@@ -9,8 +9,8 @@ import { useAuth } from '../../context/AuthContext';
  * Lets admin generate reports for sales, attendance, inventory, and salaries.
  * Route: /admin/reports
  *
- * TODO: Connect to:
- *   POST /api/reports/generate → { type, branch, dateFrom, dateTo } → returns report data
+ * Dynamic Data:
+ *   POST /api/reports → { title, type, branch, dateFrom, dateTo } → returns report data
  */
 
 function Reports() {
@@ -315,5 +315,5 @@ export default Reports;
  * Schema fields used (Report model):
  *   title, type, branch, dateFrom, dateTo, summary, data
  *
- * TODO: Connect to POST /api/reports/generate { type, branch, dateFrom, dateTo }
+ * Dynamic Data: Connects to POST /api/reports
  */

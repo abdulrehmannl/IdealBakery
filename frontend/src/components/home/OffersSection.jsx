@@ -101,10 +101,8 @@ export default OffersSection;
  * 1. Concepts used:
  *    - Component encapsulates promotional offers mapping to Discount database schema.
  *    - Hover lift effects (hover:-translate-y-2) for interactive UI.
- * 2. Dummy Data:
- *    - Data structure closely mimics MongoDB Discount schema (discountType, value, originalPrice, discountedPrice, isActive).
- * 3. Future API Replacement points:
- *    - The `offers` array should be populated via a `useEffect` hook fetching the backend API endpoint for active discounts.
- * 4. Design Note:
+ * 2. Data source:
+ *    - Fetched directly from /api/discounts
+ * 3. Design Note:
  *    - Badge background is strictly #8B1A1A with white text.
  */

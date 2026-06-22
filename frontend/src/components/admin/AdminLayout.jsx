@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 import { useAuth } from '../../context/AuthContext';
+import { Menu } from 'lucide-react';
 
 /**
  * AdminLayout Component
@@ -44,6 +45,7 @@ const PAGE_TITLES = {
 function AdminLayout({ children }) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     // Get the current path to look up the page title
     const location = useLocation();
@@ -72,16 +74,16 @@ function AdminLayout({ children }) {
          */
         <div className="flex h-screen overflow-hidden font-body" style={{ backgroundColor: '#F5F0EB' }}>
 
-            {/* ── Left: Sidebar (fixed, always visible) ── */}
-            <AdminSidebar />
+            {/* ── Left: Sidebar (fixed, always visible on desktop, hidden on mobile) ── */}
+            <AdminSidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
 
             {/*
              * ── Right: Main Content Area ──
-             * ml-56 = left margin of 224px to avoid overlapping with the fixed sidebar
+             * md:ml-56 = left margin of 224px to avoid overlapping with the fixed sidebar on desktop
              * flex-1 = takes all remaining horizontal space
              * overflow-y-auto = allows the content to scroll vertically
              */}
-            <div className="ml-56 flex-1 flex flex-col overflow-hidden">
+            <div className="md:ml-56 flex-1 flex flex-col overflow-hidden w-full">
 
                 {/* ── Top Bar ── */}
                 {/*
@@ -89,13 +91,21 @@ function AdminLayout({ children }) {
                  * and today's date on the right side.
                  * Background: white with a subtle bottom border.
                  */}
-                <header className="h-14 bg-white border-b border-border flex items-center justify-between px-6 shrink-0 shadow-sm z-10">
-                    {/* Left: Current page title */}
-                    <h1 className="font-heading font-bold text-xl text-text-dark">
-                        {pageTitle}
-                    </h1>
+                <header className="h-14 bg-white border-b border-border flex items-center justify-between px-4 md:px-6 shrink-0 shadow-sm z-10 w-full">
+                    {/* Left: Mobile Menu Toggle + Current page title */}
+                    <div className="flex items-center gap-3">
+                        <button 
+                            className="md:hidden text-text-dark hover:text-primary transition-colors"
+                            onClick={() => setMobileOpen(true)}
+                        >
+                            <Menu size={24} />
+                        </button>
+                        <h1 className="font-heading font-bold text-lg md:text-xl text-text-dark truncate max-w-[150px] sm:max-w-none">
+                            {pageTitle}
+                        </h1>
+                    </div>
                     {/* Right: Today's date + branch badge + user info */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 md:gap-4 shrink-0">
                         <span className="font-body text-sm text-text-light hidden lg:block">{today}</span>
                         
                         {/* ── Branch Badge ── */}

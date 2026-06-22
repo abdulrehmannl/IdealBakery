@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../../utils/api';
 import { Phone, MessageCircle, ChevronRight, Users, CheckCircle } from 'lucide-react';
 import ProductCard from '../../components/shared/ProductCard';
 
@@ -13,62 +14,24 @@ import ProductCard from '../../components/shared/ProductCard';
  */
 function EventOrdersPage() {
 
-    /*
-     * DUMMY PRODUCT DATA — EVENT ORDERS / CATERING PACKAGES
-     * -------------------------------------------------------
-     * TODO (Future API): Replace with GET /api/products?tags=event-order
-     * or a catering packages endpoint.
-     */
-    const packages = [
-        {
-            id: 1,
-            name: 'Mini Dessert Platter',
-            description: 'Assorted mini desserts for 20–30 guests. Mix of pastries, tarts, and brownies.',
-            price: 'Rs. 5,000',
-            image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=contain&w=500&q=80',
-            badge: 'BESTSELLER',
-        },
-        {
-            id: 2,
-            name: 'Mithai & Sweets Platter',
-            description: 'Traditional Pakistani sweets on elegant trays for Mehndi and Walima events.',
-            price: 'Rs. 4,500',
-            image: 'https://images.unsplash.com/photo-1605807646983-377bc5a76493?auto=format&fit=contain&w=500&q=80',
-            badge: null,
-        },
-        {
-            id: 3,
-            name: 'Sandwich & Burger Counter',
-            description: 'Live counter setup for 50+ guests. Includes burgers, rolls, and bite-sized snacks.',
-            price: 'From Rs. 15,000',
-            image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=contain&w=500&q=80',
-            badge: 'CATERING',
-        },
-        {
-            id: 4,
-            name: 'Corporate Lunch Boxes',
-            description: 'Individually packed meal boxes — perfect for office meetings and seminars.',
-            price: 'Rs. 600 / box',
-            image: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=contain&w=500&q=80',
-            badge: null,
-        },
-        {
-            id: 5,
-            name: 'Tiered Wedding Cake',
-            description: '3 to 5-tier custom wedding cake, fully decorated to match your theme.',
-            price: 'From Rs. 12,000',
-            image: 'https://images.unsplash.com/photo-1542826438-bd32f43d626f?auto=format&fit=contain&w=500&q=80',
-            badge: 'PREMIUM',
-        },
-        {
-            id: 6,
-            name: 'Full Bakery Catering',
-            description: 'End-to-end bakery catering for 100+ guests. Contact us for a custom quote.',
-            price: 'Custom Quote',
-            image: 'https://images.unsplash.com/photo-1447279506476-3faec8071eee?auto=format&fit=contain&w=500&q=80',
-            badge: 'BULK',
-        },
-    ];
+    const [packages, setPackages] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchPackages = async () => {
+            try {
+                const res = await api.get('/api/products?tags=event-order');
+                if (res.data.success) {
+                    setPackages(res.data.data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch event orders:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchPackages();
+    }, []);
 
     /*
      * Key points / guarantees for event orders.
@@ -164,9 +127,25 @@ function EventOrdersPage() {
 
                     {/* Product grid — 3 columns for 6 items */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                        {packages.map((pkg) => (
-                            <ProductCard key={pkg.id} product={pkg} />
-                        ))}
+                        {isLoading ? (
+                            <div className="col-span-full text-center py-12 text-text-light">Loading packages...</div>
+                        ) : packages.length > 0 ? (
+                            packages.map((pkg) => (
+                                <ProductCard 
+                                    key={pkg._id} 
+                                    product={{
+                                        id: pkg._id,
+                                        name: pkg.name,
+                                        description: pkg.description,
+                                        price: `Rs. ${pkg.price}`,
+                                        image: pkg.image || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=contain&w=500&q=80',
+                                        badge: pkg.tags && pkg.tags.length > 0 ? pkg.tags[0].toUpperCase() : null
+                                    }} 
+                                />
+                            ))
+                        ) : (
+                            <div className="col-span-full text-center py-12 text-text-light">No catering packages found.</div>
+                        )}
                     </div>
                 </div>
             </section>
@@ -230,7 +209,7 @@ export default EventOrdersPage;
  *    - Special order page with a guarantees checklist section.
  *    - CheckCircle icon from lucide-react to make guarantees visually appealing.
  *    - WhatsApp deep link (wa.me) for easy contact on mobile.
- * 2. Dummy Data: 6 catering packages including per-box and custom-quote pricing.
+ * 2. Dynamic Data: Fetched from GET /api/products?tags=event-order
  * 3. Route: /special/event-orders
  * 4. Future API: POST /api/orders for event order submissions.
  */

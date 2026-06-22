@@ -360,8 +360,8 @@ export default ProductDetailPage;
  *    - useState for quantity, selected size, active tab
  *    - Controlled quantity selector (Minus/Plus buttons with min/max limits)
  *    - Tab system for description, ingredients, allergens
- * 2. Dummy Data: Entire product is hardcoded. Size-based pricing calculated live.
- *    TODO: Fetch from GET /api/products/:id using the id from useParams()
+ * 2. Dynamic Data: Entire product is fetched live from API.
+ *    Fetches from GET /api/products/:id using the id from useParams()
  * 3. Route: /product/:id
  * 4. Future: ADD TO CART should dispatch to a cart context or Redux store.
  */

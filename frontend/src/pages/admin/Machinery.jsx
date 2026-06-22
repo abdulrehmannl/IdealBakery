@@ -18,67 +18,6 @@ import api from '../../utils/api';
  *   DELETE /api/machinery/:id       → delete machine
  */
 
-// ── DUMMY DATA ────────────────────────────────────────────────────────────────
-// TODO: Replace with GET /api/machinery
-// Fields match the Machinery mongoose schema:
-//   name, branch, purchaseDate, purchaseCost, condition, description,
-//   warrantyExpiry, maintenanceHistory[]
-const INITIAL_MACHINES = [
-  {
-    id: 1,
-    name: 'Industrial Oven',
-    branch: 'Branch 1',
-    purchaseDate: '2022-06-15',
-    purchaseCost: 450000,
-    condition: 'Good',
-    description: 'Main baking oven for breads and cakes. Capacity 60 trays.',
-    warrantyExpiry: '2027-06-15',
-    maintenanceHistory: [
-      { date: '2025-01-10', note: 'Replaced heating element' },
-      { date: '2024-08-05', note: 'Routine cleaning and calibration' },
-    ],
-  },
-  {
-    id: 2,
-    name: 'Dough Mixer',
-    branch: 'Branch 1',
-    purchaseDate: '2023-03-20',
-    purchaseCost: 85000,
-    condition: 'Maintenance',
-    description: '50L commercial spiral dough mixer.',
-    warrantyExpiry: '2025-03-20',
-    maintenanceHistory: [
-      { date: '2026-03-01', note: 'Motor making noise — sent for repair' },
-    ],
-  },
-  {
-    id: 3,
-    name: 'Display Refrigerator',
-    branch: 'Branch 2',
-    purchaseDate: '2023-09-01',
-    purchaseCost: 120000,
-    condition: 'Good',
-    description: 'Glass-front chiller for displaying cakes and pastries.',
-    warrantyExpiry: '2026-09-01',
-    maintenanceHistory: [
-      { date: '2025-06-12', note: 'Gas refilled' },
-    ],
-  },
-  {
-    id: 4,
-    name: 'Deep Fryer',
-    branch: 'Branch 2',
-    purchaseDate: '2021-11-10',
-    purchaseCost: 35000,
-    condition: 'Broken',
-    description: 'Used for samosa, pakora, and french fries.',
-    warrantyExpiry: '2023-11-10',
-    maintenanceHistory: [
-      { date: '2026-02-14', note: 'Heating coil burnt — needs replacement' },
-      { date: '2025-12-01', note: 'Thermostat repaired' },
-    ],
-  },
-];
 
 // Condition badge styling
 // Good = green, Maintenance = yellow, Broken = red
@@ -148,8 +87,9 @@ function Machinery() {
     setShowForm(true); 
   };
   const openEdit = (m) => {
+    const displayCondition = m.condition ? m.condition.charAt(0).toUpperCase() + m.condition.slice(1) : 'Good';
     setForm({ name: m.name, branch: m.branch?._id || m.branch, purchaseDate: m.purchaseDate,
-      purchaseCost: m.purchaseCost, condition: m.condition,
+      purchaseCost: m.purchaseCost, condition: displayCondition,
       description: m.description, warrantyExpiry: m.warrantyExpiry });
     setEditId(m.id);
     setShowForm(true);
@@ -228,11 +168,13 @@ function Machinery() {
       {/* Each machine is shown as a card, not a table row */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {(filtered || []).map(machine => {
-          const cs = CONDITION_STYLES[machine.condition] || CONDITION_STYLES.Good;
+          // Capitalize condition just in case backend returns lowercase
+          const displayCondition = machine.condition ? machine.condition.charAt(0).toUpperCase() + machine.condition.slice(1) : 'Good';
+          const cs = CONDITION_STYLES[displayCondition] || CONDITION_STYLES.Good;
           const ConditionIcon = cs.icon;
 
           // Check if warranty has expired
-          const isWarrantyExpired = new Date(machine.warrantyExpiry) < new Date();
+          const isWarrantyExpired = machine.warrantyExpiry && new Date(machine.warrantyExpiry) < new Date();
 
           return (
             <div
@@ -250,8 +192,7 @@ function Machinery() {
                   className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border"
                   style={{ backgroundColor: cs.bg, borderColor: cs.border, color: cs.text }}
                 >
-                  <ConditionIcon size={12} />
-                  {machine.condition}
+                  <ConditionIcon size={12} /> {displayCondition}
                 </span>
               </div>
 

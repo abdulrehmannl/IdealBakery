@@ -18,37 +18,7 @@ import api from '../../utils/api';
  *   DELETE /api/categories/:id     → delete category
  */
 
-// ── DUMMY DATA ────────────────────────────────────────────────────────────────
-// TODO: Replace with real data from GET /api/categories
-// Each category matches the Category mongoose schema:
-//   name, description, parentCategory (null = top-level), isActive
-const INITIAL_CATEGORIES = [
-  // ── Top-level categories ──
-  { id: 1, name: 'Fast Food',     description: 'Burgers, fries, wraps & more',        parentId: null, isActive: true  },
-  { id: 2, name: 'Bakery Items',  description: 'Cakes, bread, pastries & baked goods', parentId: null, isActive: true  },
-  { id: 3, name: 'Desi Items',    description: 'Traditional Pakistani mithai & snacks', parentId: null, isActive: true  },
-  { id: 4, name: 'Desserts',      description: 'Sweets, puddings & sweet treats',       parentId: null, isActive: true  },
-  { id: 5, name: 'Ice Cream',     description: 'Scoops, sundaes & frozen desserts',     parentId: null, isActive: true  },
-  { id: 6, name: 'Beverages',     description: 'Juices, milkshakes, tea & coffee',      parentId: null, isActive: true  },
 
-  // ── Sub-categories of Fast Food (parentId: 1) ──
-  { id: 7,  name: 'Burgers',      description: 'All beef and chicken burgers',          parentId: 1, isActive: true  },
-  { id: 8,  name: 'Wraps',        description: 'Shawarma and wrap rolls',               parentId: 1, isActive: true  },
-  { id: 9,  name: 'Fries & Sides',description: 'French fries, nuggets, wings',          parentId: 1, isActive: true  },
-
-  // ── Sub-categories of Bakery Items (parentId: 2) ──
-  { id: 10, name: 'Cakes',        description: 'Birthday, wedding & custom cakes',      parentId: 2, isActive: true  },
-  { id: 11, name: 'Bread',        description: 'White bread, bun & toast',             parentId: 2, isActive: true  },
-  { id: 12, name: 'Pastries',     description: 'Croissants, tarts & puffs',            parentId: 2, isActive: false },
-
-  // ── Sub-categories of Desi Items (parentId: 3) ──
-  { id: 13, name: 'Mithai',       description: 'Gulab jamun, barfi, ladoo & more',     parentId: 3, isActive: true  },
-  { id: 14, name: 'Desi Snacks',  description: 'Samosa, pakora, chaat',                parentId: 3, isActive: true  },
-
-  // ── Sub-categories of Beverages (parentId: 6) ──
-  { id: 15, name: 'Hot Drinks',   description: 'Tea, coffee, hot chocolate',           parentId: 6, isActive: true  },
-  { id: 16, name: 'Cold Drinks',  description: 'Juices, milkshakes, cold brew',        parentId: 6, isActive: true  },
-];
 
 // Empty form — used when adding a new category
 const EMPTY_FORM = {

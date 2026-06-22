@@ -289,10 +289,8 @@ export default ProfilePage;
  *    - Separate `editData` state — only committed to `userData` on Save (prevents live mutation).
  *    - Avatar initials from first letter of name.
  *    - Reusable status badge using dynamic Tailwind classes.
- * 2. Dummy Data:
- *    - User data and order history are hardcoded.
- *    - TODO: Fetch user from GET /api/users/profile with JWT token in header.
- *    - TODO: Fetch orders from GET /api/orders?userId=<id>
+ * 2. Dynamic Data:
+ *    - Fetches orders from GET /api/orders/my-orders
  * 3. Route: /profile
  * 4. Future: Add auth guard — if no token in localStorage, redirect to /login.
  */

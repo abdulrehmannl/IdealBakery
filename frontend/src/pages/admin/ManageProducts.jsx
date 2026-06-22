@@ -9,19 +9,7 @@ import api from '../../utils/api';
  * Route: /admin/products
  */
 
-// ── DUMMY DATA ───────────────────────────────────────────────
-// TODO: Replace with GET /api/products → Product[]
-const INITIAL_PRODUCTS = [
-    { id: 1, name: 'Black Forest Cake',  category: 'Bakery Items', price: 2200, discount: 10, stock: 8,  isAvailable: true,  isSugarFree: false, weight: '1kg',   image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=80&q=60', tags: ['cake','birthday'], branch: 'Branch 1' },
-    { id: 2, name: 'Zinger Burger',      category: 'Fast Food',    price: 450,  discount: 0,  stock: 50, isAvailable: true,  isSugarFree: false, weight: '250g',  image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=80&q=60', tags: ['burger','fast food'], branch: 'Both' },
-    { id: 3, name: 'Gulab Jamun 1kg',    category: 'Desi Items',   price: 500,  discount: 5,  stock: 20, isAvailable: true,  isSugarFree: false, weight: '1kg',   image: 'https://images.unsplash.com/photo-1605807646983-377bc5a76493?w=80&q=60', tags: ['mithai','desi'], branch: 'Both' },
-    { id: 4, name: 'Mango Milkshake',    category: 'Beverages',    price: 220,  discount: 0,  stock: 30, isAvailable: true,  isSugarFree: false, weight: '300ml', image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=80&q=60', tags: ['beverage','cold'], branch: 'Branch 2' },
-    { id: 5, name: 'Chocolate Brownie',  category: 'Desserts',     price: 320,  discount: 0,  stock: 3,  isAvailable: true,  isSugarFree: false, weight: '150g',  image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=80&q=60', tags: ['dessert','chocolate'], branch: 'Branch 1' },
-    { id: 6, name: 'Vanilla Ice Cream',  category: 'Ice Cream',    price: 180,  discount: 0,  stock: 0,  isAvailable: false, isSugarFree: false, weight: '1 scoop', image: 'https://images.unsplash.com/photo-1559703248-dcaaec9fab78?w=80&q=60', tags: ['ice cream'], branch: 'Both' },
-];
 
-const CATEGORIES = ['Fast Food', 'Bakery Items', 'Desi Items', 'Desserts', 'Ice Cream', 'Beverages'];
-const BRANCHES   = ['Branch 1', 'Branch 2', 'Both'];
 
 // Empty form state — used when opening the Add New form or clearing after submit
 const EMPTY_FORM = {

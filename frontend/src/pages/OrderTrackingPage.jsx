@@ -289,8 +289,7 @@ export default OrderTrackingPage;
  *    - `trackedOrder` state is null by default; set after successful "API" call.
  *    - `getStepState()` function maps the current order status to each step's visual state.
  *    - Visual timeline built with flex + absolute vertical line between steps.
- * 2. Dummy Data:
- *    - Any Order ID of 4+ chars will "find" a dummy order.
- *    - TODO: Replace with GET /api/orders/track?orderId=...&phone=...
+ * 2. Dynamic Data:
+ *    - Fetches order tracking data from GET /api/orders/track
  * 3. Route: /order-tracking
  */

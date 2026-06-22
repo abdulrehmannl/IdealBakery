@@ -52,10 +52,10 @@ export default HomePage;
  * =====================
  * 1. Concepts used:
  *    - Component Composition: Building a complex page using smaller, focused React components.
- * 2. Dummy Data: 
- *    - None directly in this file; handled by child components.
- * 3. Known limitations:
- *    - None currently.
+ * 2. Data source:
+ *    - All sections pull data from backend APIs or subcomponents that fetch.
+ * 3. Future integrations:
+ *    - Auth state should hide/show the 'Create an Account' banner if the user is already logged in.
  * 4. Performance considerations:
  *    - This page orchestrates layout but delegates state (like carousel state) to children.
  *    - Consider React.lazy() for loading components lower down the page (like Branches) if they become heavy later.

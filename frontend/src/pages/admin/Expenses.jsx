@@ -14,18 +14,7 @@ import api from '../../utils/api';
  *   DELETE /api/expenses/:id                    → delete expense
  */
 
-// ── DUMMY DATA ────────────────────────────────────────────────────────────────
-// TODO: Replace with GET /api/expenses
-// Fields match Expense mongoose schema:
-//   branch, title, amount, category, date, paidBy, notes
-const INITIAL_EXPENSES = [
-  { id: 1, title: 'Monthly Rent – Branch 1',     category: 'rent',        amount: 45000, date: '2026-04-01', branch: 'Branch 1', paidBy: 'Ali Hassan',   notes: 'Paid to landlord' },
-  { id: 2, title: 'Electricity Bill – Branch 2', category: 'electricity', amount: 8200,  date: '2026-04-02', branch: 'Branch 2', paidBy: 'Ali Hassan',   notes: 'MEPCO bill April' },
-  { id: 3, title: 'Packaging Material',           category: 'packaging',   amount: 3500,  date: '2026-04-03', branch: 'Branch 1', paidBy: 'Sara Ahmed',   notes: 'Boxes and bags' },
-  { id: 4, title: 'Driver Salary Advance',        category: 'salary',      amount: 5000,  date: '2026-04-03', branch: 'Branch 1', paidBy: 'Ali Hassan',   notes: 'Advance for Imran' },
-  { id: 5, title: 'Cleaning Supplies',            category: 'other',       amount: 1200,  date: '2026-04-04', branch: 'Branch 2', paidBy: 'Nadia Kausar', notes: 'Dettol and brooms' },
-  { id: 6, title: 'Monthly Rent – Branch 2',     category: 'rent',        amount: 38000, date: '2026-04-01', branch: 'Branch 2', paidBy: 'Ali Hassan',   notes: 'Paid to landlord' },
-];
+
 
 // All expense categories — matches schema enum
 const CATEGORIES = ['rent', 'electricity', 'packaging', 'salary', 'other'];
@@ -55,6 +44,7 @@ function Expenses() {
   const [expenses, setExpenses] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm]         = useState(EMPTY_FORM);
+  const [editId, setEditId]     = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -101,16 +91,22 @@ function Expenses() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/api/expenses', { ...form, amount: Number(form.amount) });
+      const payload = { ...form, amount: Number(form.amount) };
+      if (editId) {
+        await api.put(`/api/expenses/${editId}`, payload);
+      } else {
+        await api.post('/api/expenses', payload);
+      }
       fetchInitialData();
       setShowForm(false);
+      setEditId(null);
       setForm({
         ...EMPTY_FORM,
         branch: branchesList.length > 0 ? branchesList[0]._id : ''
       });
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || "Failed to add expense.");
+      alert(err.response?.data?.message || "Failed to save expense.");
     }
   };
 
@@ -153,6 +149,7 @@ function Expenses() {
             ...EMPTY_FORM,
             branch: branchesList.length > 0 ? branchesList[0]._id : ''
           });
+          setEditId(null);
           setShowForm(true);
         }}
           className="flex items-center gap-2 px-4 py-2.5 text-white text-sm font-bold rounded-lg hover:opacity-90 transition-opacity shadow-sm"
@@ -197,10 +194,20 @@ function Expenses() {
                   <td className="px-4 py-3 text-text-light text-xs">{exp.branch?.name || exp.branch}</td>
                   <td className="px-4 py-3 text-text-light text-xs">{exp.paidBy}</td>
                   <td className="px-4 py-3">
-                    <button onClick={() => setDeleteId(exp.id)}
-                      className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors">
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="flex gap-2">
+                      <button onClick={() => {
+                          setEditId(exp.id);
+                          setForm({ title: exp.title, amount: exp.amount, category: exp.category, date: exp.date, branch: exp.branch?._id || exp.branch, paidBy: exp.paidBy, notes: exp.notes || '' });
+                          setShowForm(true);
+                        }}
+                        className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                      </button>
+                      <button onClick={() => setDeleteId(exp.id)}
+                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -217,8 +224,8 @@ function Expenses() {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h3 className="font-heading font-bold text-xl text-text-dark">Add New Expense</h3>
-              <button onClick={() => setShowForm(false)} className="p-2 rounded-lg hover:bg-secondary transition-colors"><X size={18} /></button>
+              <h3 className="font-heading font-bold text-xl text-text-dark">{editId ? 'Edit Expense' : 'Add New Expense'}</h3>
+              <button onClick={() => { setShowForm(false); setEditId(null); }} className="p-2 rounded-lg hover:bg-secondary transition-colors"><X size={18} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 grid grid-cols-2 gap-4">
               {/* Title */}
@@ -272,9 +279,9 @@ function Expenses() {
                 <button type="submit"
                   className="flex items-center gap-2 px-6 py-2.5 text-white font-bold text-sm rounded-lg hover:opacity-90 transition-opacity"
                   style={{ backgroundColor: '#8B1A1A' }}>
-                  <Check size={15} /> Add Expense
+                  <Check size={15} /> {editId ? 'Save Changes' : 'Add Expense'}
                 </button>
-                <button type="button" onClick={() => setShowForm(false)}
+                <button type="button" onClick={() => { setShowForm(false); setEditId(null); }}
                   className="px-6 py-2.5 border border-border text-text-light font-bold text-sm rounded-lg hover:bg-secondary transition-colors">
                   Cancel
                 </button>

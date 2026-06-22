@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../utils/api';
 import { Mail, ArrowLeft, CheckCircle, Send } from 'lucide-react';
 
 /**
@@ -20,25 +21,21 @@ function ForgotPasswordPage() {
     const [isSubmitted, setIsSubmitted] = useState(false);
 
     // ── Handlers ───────────────────────────────────────────────
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
 
-        /*
-         * DUMMY SUBMIT — NO REAL API CALL YET
-         * ------------------------------------
-         * TODO (Future API): Replace with:
-         *   axios.post('/api/users/forgot-password', { email })
-         *     .then(() => setIsSubmitted(true))
-         *     .catch(err => console.error(err));
-         */
-        console.log('Password reset requested for (dummy):', email);
-
-        // Simulate API call with a 1.5s delay, then show success state
-        setTimeout(() => {
-            setIsLoading(false);
+        try {
+            await api.post('/api/users/forgot-password', { email });
             setIsSubmitted(true);
-        }, 1500);
+        } catch (err) {
+            console.error('Failed to send reset link', err);
+            // Even if it fails (e.g. user not found), we often show success to prevent email enumeration,
+            // but we can log the error. Or you can add an error state if preferred.
+            setIsSubmitted(true); // Always show success to prevent enumeration
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -196,6 +193,5 @@ export default ForgotPasswordPage;
  *    - `isLoading` disables the button to prevent double-submits.
  * 2. Route: /forgot-password
  * 3. No Navbar/Footer: This page is hidden from the global layout — see App.jsx.
- * 4. Dummy Data: Submission only console.logs. No real API call.
- *    TODO: Replace with axios.post('/api/users/forgot-password', { email })
+ * 4. Dynamic Data: Connected to POST /api/users/forgot-password
  */

@@ -428,8 +428,8 @@ export default CheckoutPage;
  *    - Radio buttons for payment method selection.
  *    - Conditional rendering: shows success screen after order, form before.
  *    - Live total calculation: subtotal + delivery fee (waived if order > Rs. 1000).
- * 2. Dummy Data:
- *    - `cartItems` is hardcoded. TODO: Replace with CartContext or state management.
- *    - TODO: Submit via axios.post('/api/orders', orderData).
+ * 2. Dynamic Data:
+ *    - Uses CartContext for `cartItems`.
+ *    - Submits via api.post('/api/orders', orderData).
  * 3. Route: /checkout
  */

@@ -154,9 +154,9 @@ export default ProductCard;
  *    - Image click or "VIEW DETAILS" → /product/:id → ProductDetailPage
  *    - "ORDER NOW" button → /checkout → CheckoutPage
  *
- * 3. Dummy Data:
+ * 3. Dynamic Data:
  *    - Product data comes from the parent page (category pages, special pages, etc.)
- *    - Real data will come from API: GET /api/products and GET /api/products/:id
+ *    - Real data comes from API: GET /api/products and GET /api/products/:id
  *
  * 4. Future improvements:
  *    - Add "ADD TO CART" button that dispatches to a Cart context/state.

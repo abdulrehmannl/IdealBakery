@@ -47,10 +47,8 @@ export default AnnouncementBar;
  * 1. Concepts used:
  *    - `useState` + `useEffect` for interval rotation.
  *    - Absolute positioning with CSS transitions to create a slide-up/fade effect.
- * 2. Dummy Data: 
- *    - Hardcoded string messages.
- * 3. Known limitations:
+ * 2. Known limitations:
  *    - Height is fixed to `h-8`. Multi-line strings not supported without height increase.
- * 4. Performance considerations:
+ * 3. Performance considerations:
  *    - Proper cleanup in useEffect timer.
  */

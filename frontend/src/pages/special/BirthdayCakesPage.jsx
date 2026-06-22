@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../../utils/api';
 import { Phone, MessageCircle, ChevronRight, Clock, Star } from 'lucide-react';
 import ProductCard from '../../components/shared/ProductCard';
 
@@ -16,78 +17,24 @@ import ProductCard from '../../components/shared/ProductCard';
  */
 function BirthdayCakesPage() {
 
-    /*
-     * DUMMY PRODUCT DATA — BIRTHDAY CAKES
-     * --------------------------------------
-     * TODO (Future API): Replace with GET /api/products?tags=birthday-cake
-     * or a dedicated specialOrders API endpoint.
-     */
-    const cakes = [
-        {
-            id: 1,
-            name: 'Classic Chocolate Birthday Cake',
-            description: '2-tiered moist chocolate sponge with chocolate ganache and fondant roses.',
-            price: 'From Rs. 2500',
-            image: 'https://images.unsplash.com/photo-1558301211-0d8c8ddee6ec?auto=format&fit=contain&w=500&q=80',
-            badge: 'BESTSELLER',
-        },
-        {
-            id: 2,
-            name: 'Red Velvet Dream',
-            description: 'Elegant red velvet layers with cream cheese frosting and edible glitter.',
-            price: 'From Rs. 2800',
-            image: 'https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?auto=format&fit=contain&w=500&q=80',
-            badge: 'CUSTOMER FAV',
-        },
-        {
-            id: 3,
-            name: 'Vanilla Rainbow Cake',
-            description: 'Colorful layered vanilla cake — perfect for kids\' birthday parties.',
-            price: 'From Rs. 2200',
-            image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=contain&w=500&q=80',
-            badge: null,
-        },
-        {
-            id: 4,
-            name: 'Floral Fondant Cake',
-            description: 'Smooth fondant-finished cake with handcrafted sugar flowers. Fully custom.',
-            price: 'From Rs. 3500',
-            image: 'https://images.unsplash.com/photo-1542826438-bd32f43d626f?auto=format&fit=contain&w=500&q=80',
-            badge: 'PREMIUM',
-        },
-        {
-            id: 5,
-            name: 'Black Forest Birthday Cake',
-            description: 'Classic black forest with dark cherries, whipped cream, and chocolate shavings.',
-            price: 'From Rs. 2600',
-            image: 'https://images.unsplash.com/photo-1587248720327-8eb72564be1e?auto=format&fit=contain&w=500&q=80',
-            badge: null,
-        },
-        {
-            id: 6,
-            name: 'Caramel Drip Cake',
-            description: 'Trendy drip-cake design with salted caramel filling and buttercream swirls.',
-            price: 'From Rs. 3200',
-            image: 'https://images.unsplash.com/photo-1571115177098-24ec42ed204d?auto=format&fit=contain&w=500&q=80',
-            badge: 'NEW',
-        },
-        {
-            id: 7,
-            name: 'Kids Theme Cake',
-            description: 'Custom theme cake (cartoon, princess, superhero) with edible photo print.',
-            price: 'From Rs. 2800',
-            image: 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?auto=format&fit=contain&w=500&q=80',
-            badge: null,
-        },
-        {
-            id: 8,
-            name: 'Number Cream Cake',
-            description: 'Chic number-shaped cake decorated with macarons, donuts, and fresh flowers.',
-            price: 'From Rs. 4000',
-            image: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?auto=format&fit=contain&w=500&q=80',
-            badge: 'TRENDING',
-        },
-    ];
+    const [cakes, setCakes] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchCakes = async () => {
+            try {
+                const res = await api.get('/api/products?tags=birthday-cake');
+                if (res.data.success) {
+                    setCakes(res.data.data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch birthday cakes:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchCakes();
+    }, []);
 
     /*
      * How-to-order steps — shown as a simple 3-step guide below the product grid.
@@ -202,9 +149,25 @@ function BirthdayCakesPage() {
                         Uses the shared ProductCard component.
                     */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch">
-                        {cakes.map((cake) => (
-                            <ProductCard key={cake.id} product={cake} />
-                        ))}
+                        {isLoading ? (
+                            <div className="col-span-full text-center py-12 text-text-light">Loading cakes...</div>
+                        ) : cakes.length > 0 ? (
+                            cakes.map((cake) => (
+                                <ProductCard 
+                                    key={cake._id} 
+                                    product={{
+                                        id: cake._id,
+                                        name: cake.name,
+                                        description: cake.description,
+                                        price: `From Rs. ${cake.price}`,
+                                        image: cake.image || 'https://images.unsplash.com/photo-1558301211-0d8c8ddee6ec?auto=format&fit=contain&w=500&q=80',
+                                        badge: cake.tags && cake.tags.length > 0 ? cake.tags[0].toUpperCase() : null
+                                    }} 
+                                />
+                            ))
+                        ) : (
+                            <div className="col-span-full text-center py-12 text-text-light">No birthday cakes found.</div>
+                        )}
                     </div>
                 </div>
             </section>
@@ -258,9 +221,8 @@ export default BirthdayCakesPage;
  *    - Full special-order page with hero, notice bar, product grid, and how-to-order steps.
  *    - <a href="tel:..."> for direct phone calling from mobile.
  *    - <a href="https://wa.me/..."> WhatsApp deep link.
- * 2. Dummy Data:
- *    - 8 birthday cake products with "From Rs. X" pricing.
+ * 2. Dynamic Data:
+ *    - Fetched from GET /api/products?tags=birthday-cake
  *    - Phone number: 0323 4404773 (from the Branches data on homepage).
  * 3. Route: /special/birthday-cakes
- * 4. Future API: GET /api/products?tags=birthday or POST /api/orders for placing orders.
  */

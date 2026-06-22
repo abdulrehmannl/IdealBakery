@@ -46,10 +46,8 @@ export default MarqueeTicker;
  * 1. Concepts used:
  *    - `aria-hidden` set to true on the duplicate element so screen readers don't read it twice.
  *    - Custom CSS animation applied to multiple blocks.
- * 2. Dummy Data: 
- *    - Hardcoded string variables.
- * 3. Known limitations:
+ * 2. Known limitations:
  *    - If viewed on an ultra-wide screen (>4000px), 8 segments might not be enough to hide the loop resetting.
- * 4. Performance considerations:
+ * 3. Performance considerations:
  *    - Strictly utilizes CSS layer animations, meaning 0 CPU main-thread overhead offloading work to GPU.
  */

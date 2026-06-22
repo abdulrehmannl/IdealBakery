@@ -17,18 +17,7 @@ import api from '../../utils/api';
  *   PUT  /api/salaries/:id/pay             → mark as paid
  */
 
-// ── DUMMY DATA ────────────────────────────────────────────────────────────────
-// TODO: Replace with GET /api/salaries?month=&year=
-// Fields match the Salary mongoose schema:
-//   staff, month, year, basicSalary, bonus, deductions, netSalary, status, paidOn
-const INITIAL_SALARIES = [
-  { id: 1, staffName: 'Ali Hassan',   role: 'Manager',  branch: 'Branch 1', basicSalary: 45000, bonus: 3000, deductions: 0,    status: 'Paid',    paidOn: '2026-03-30' },
-  { id: 2, staffName: 'Sara Ahmed',   role: 'Cashier',  branch: 'Branch 1', basicSalary: 28000, bonus: 0,    deductions: 1000, status: 'Pending', paidOn: '' },
-  { id: 3, staffName: 'Kamran Baig',  role: 'Chef',     branch: 'Branch 2', basicSalary: 35000, bonus: 2000, deductions: 0,    status: 'Pending', paidOn: '' },
-  { id: 4, staffName: 'Nadia Kausar', role: 'Waiter',   branch: 'Branch 2', basicSalary: 22000, bonus: 0,    deductions: 500,  status: 'Pending', paidOn: '' },
-  { id: 5, staffName: 'Imran Mirza',  role: 'Delivery', branch: 'Branch 1', basicSalary: 25000, bonus: 1500, deductions: 0,    status: 'Paid',    paidOn: '2026-03-29' },
-  { id: 6, staffName: 'Zara Malik',   role: 'Cleaner',  branch: 'Branch 2', basicSalary: 18000, bonus: 0,    deductions: 0,    status: 'Pending', paidOn: '' },
-];
+
 
 // Month names for the selector dropdown
 const MONTHS = [

@@ -46,6 +46,7 @@ function ManageBranches() {
 
   // form holds the current edit values
   const [form, setForm]       = useState({});
+  const [showAddForm, setShowAddForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchBranches = async () => {
@@ -86,22 +87,42 @@ function ManageBranches() {
   const saveEdit = async (e) => {
     e.preventDefault();
     try {
-      await api.put(`/api/branches/${editId}`, form);
+      if (editId === 'new') {
+        await api.post('/api/branches', form);
+        setShowAddForm(false);
+      } else {
+        await api.put(`/api/branches/${editId}`, form);
+      }
       fetchBranches();
       setEditId(null);
       setForm({});
     } catch (err) {
       console.error(err);
+      alert(err.response?.data?.message || 'Failed to save branch');
     }
+  };
+
+  const openAdd = () => {
+    setEditId('new');
+    setForm({ name: '', address: '', city: 'Sahiwal', phone: '', managerName: '', isActive: true });
+    setShowAddForm(true);
   };
 
   return (
     <div className="space-y-5">
 
-      {/* Info note for admin */}
-      <p className="text-sm text-text-light">
-        Managing <strong>{branches.length}</strong> branches. Click <strong>Edit</strong> on any card to update branch details.
-      </p>
+      {/* Info note and Add button */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-text-light">
+          Managing <strong>{branches.length}</strong> branches. Click <strong>Edit</strong> on any card to update branch details.
+        </p>
+        <button
+          onClick={openAdd}
+          className="flex items-center gap-2 px-4 py-2.5 text-white text-sm font-bold rounded-lg hover:opacity-90 transition-opacity shadow-sm bg-primary"
+        >
+          + Add Branch
+        </button>
+      </div>
 
       {/* ── Branch Cards Grid (side by side) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -229,6 +250,59 @@ function ManageBranches() {
 
           </div>
         ))}
+        {/* ── Add Mode: Inline Form ── */}
+        {editId === 'new' && showAddForm && (
+          <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-border flex items-center justify-between"
+              style={{ backgroundColor: '#F5F0EB' }}>
+              <h3 className="font-heading font-bold text-lg text-text-dark">New Branch</h3>
+            </div>
+            <form onSubmit={saveEdit} className="px-6 py-5 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Branch Name</label>
+                <input name="name" value={form.name} onChange={handleChange} required
+                  className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Address</label>
+                <textarea name="address" value={form.address} onChange={handleChange} rows={2} required
+                  className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">City</label>
+                  <input name="city" value={form.city} onChange={handleChange} required
+                    className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Phone</label>
+                  <input name="phone" value={form.phone} onChange={handleChange} required
+                    className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Manager Name</label>
+                <input name="managerName" value={form.managerName} onChange={handleChange}
+                  className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} className="w-4 h-4 accent-primary" />
+                <span className="text-sm font-semibold text-text-dark">Branch is Active</span>
+              </label>
+              <div className="flex gap-3 pt-1">
+                <button type="submit"
+                  className="flex items-center gap-2 px-5 py-2.5 text-white font-bold text-sm rounded-lg hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: '#8B1A1A' }}>
+                  <Check size={14} /> Create Branch
+                </button>
+                <button type="button" onClick={() => { setEditId(null); setShowAddForm(false); }}
+                  className="flex items-center gap-2 px-5 py-2.5 border border-border text-text-light font-bold text-sm rounded-lg hover:bg-secondary transition-colors">
+                  <X size={14} /> Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
 
     </div>

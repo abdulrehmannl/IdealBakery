@@ -18,20 +18,7 @@ import api from '../../utils/api';
  *   DELETE /api/inventory/:id         → delete item
  */
 
-// ── DUMMY DATA ────────────────────────────────────────────────────────────────
-// TODO: Replace with GET /api/inventory
-// Fields match the Inventory mongoose schema:
-//   name, branch, unit, quantity, minStock, costPerUnit
-const INITIAL_ITEMS = [
-  { id: 1, name: 'All-Purpose Flour', branch: 'Branch 1', unit: 'kg',    quantity: 3,   minStock: 10,  costPerUnit: 120 },
-  { id: 2, name: 'Sugar',             branch: 'Branch 1', unit: 'kg',    quantity: 25,  minStock: 10,  costPerUnit: 90  },
-  { id: 3, name: 'Whipping Cream',    branch: 'Branch 2', unit: 'L',     quantity: 2,   minStock: 5,   costPerUnit: 350 },
-  { id: 4, name: 'Dark Chocolate',    branch: 'Branch 1', unit: 'kg',    quantity: 1,   minStock: 4,   costPerUnit: 800 },
-  { id: 5, name: 'Butter',            branch: 'Branch 2', unit: 'kg',    quantity: 12,  minStock: 5,   costPerUnit: 600 },
-  { id: 6, name: 'Eggs',             branch: 'Branch 1', unit: 'dozen', quantity: 8,   minStock: 5,   costPerUnit: 200 },
-  { id: 7, name: 'Milk',             branch: 'Branch 2', unit: 'L',     quantity: 20,  minStock: 10,  costPerUnit: 160 },
-  { id: 8, name: 'Cooking Oil',      branch: 'Branch 2', unit: 'L',     quantity: 4,   minStock: 6,   costPerUnit: 700 },
-];
+
 
 const BRANCHES = ['All', 'Branch 1', 'Branch 2'];
 const UNITS    = ['kg', 'g', 'L', 'ml', 'dozen', 'pieces', 'packets'];

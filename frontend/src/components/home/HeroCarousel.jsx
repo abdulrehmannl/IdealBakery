@@ -75,7 +75,7 @@ function HeroCarousel() {
     }, [currentSlide, slides.length]);
 
     return (
-        <div className="relative w-full h-[600px] overflow-hidden group bg-gray-100">
+        <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden group bg-gray-100">
             
             <div 
                 className={`absolute inset-0 flex h-full ${isTransitioning ? 'transition-transform duration-1000 ease-in-out' : ''}`}
@@ -92,7 +92,7 @@ function HeroCarousel() {
                         <div className="absolute inset-0 bg-black/20"></div>
 
                         {/* Individual Text Box for each slide */}
-                        <div className="absolute top-1/2 -translate-y-1/2 left-8 md:left-24 z-20 w-full max-w-[28rem] pointer-events-none">
+                        <div className="absolute top-1/2 -translate-y-1/2 left-4 right-4 md:right-auto md:left-24 z-20 md:w-full max-w-[28rem] pointer-events-none mx-auto md:mx-0">
                             <div 
                                 className="pointer-events-auto"
                                 style={{
@@ -106,7 +106,7 @@ function HeroCarousel() {
                                         padding: '2rem 3rem' 
                                     }}
                                 >
-                                    <h2 className="font-heading text-3xl md:text-4xl text-[#3E2723] mb-4 leading-tight tracking-tight font-bold">
+                                    <h2 className="font-heading text-2xl md:text-4xl text-[#3E2723] mb-3 md:mb-4 leading-tight tracking-tight font-bold">
                                         {slide.title}
                                     </h2>
                                     <p className="font-body text-[#3E2723]/90 mb-6 text-sm md:text-[15px] font-semibold leading-relaxed px-2">

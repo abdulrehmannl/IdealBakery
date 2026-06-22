@@ -129,9 +129,8 @@ export default CategoryPageLayout;
  *    - Layout component pattern — shared shell that wraps every category page.
  *    - Conditional rendering for the bgImage overlay.
  *    - Breadcrumb navigation using React Router <Link>.
- * 2. Dummy Data:
+ * 2. Product Data:
  *    - Products array passed from parent page via props.
- *    - Each parent page currently has hardcoded dummy products.
  * 3. Future API replacement:
  *    - Move data fetching to parent pages using useEffect + axios.
  *    - Category ID should be read from URL params or passed as prop.

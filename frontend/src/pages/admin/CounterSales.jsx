@@ -11,39 +11,9 @@ import { useAuth } from '../../context/AuthContext';
  * Right side: current order summary with quantities and total.
  *
  * Route: /admin/counter
- *
- * TODO: Connect to:
- *   GET  /api/products?isAvailable=true  → product list
- *   POST /api/counter-sales              → save the completed sale
- *   GET  /api/counter-sales?today=true   → today's sales summary
  */
 
-// ── DUMMY PRODUCTS ────────────────────────────────────────────────────────────
-// TODO: Replace with GET /api/products?isAvailable=true
-const PRODUCTS = [
-  { id: 1, name: 'Black Forest Cake', category: 'Bakery', price: 2200, image: '🎂' },
-  { id: 2, name: 'Zinger Burger',     category: 'Fast Food', price: 450,  image: '🍔' },
-  { id: 3, name: 'Gulab Jamun 1kg',   category: 'Desi',    price: 500,  image: '🍮' },
-  { id: 4, name: 'Mango Milkshake',   category: 'Drinks',  price: 220,  image: '🥤' },
-  { id: 5, name: 'Chocolate Brownie', category: 'Desserts',price: 320,  image: '🍫' },
-  { id: 6, name: 'Chicken Shawarma',  category: 'Fast Food', price: 380,image: '🌯' },
-  { id: 7, name: 'Pineapple Cake',    category: 'Bakery',  price: 1800, image: '🍰' },
-  { id: 8, name: 'Samosa (6 pcs)',    category: 'Desi',    price: 180,  image: '🥟' },
-  { id: 9, name: 'French Fries',      category: 'Fast Food', price: 200, image: '🍟' },
-  { id: 10,name: 'Vanilla Ice Cream', category: 'Desserts',price: 180,  image: '🍦' },
-  { id: 11,name: 'Green Tea',         category: 'Drinks',  price: 120,  image: '🍵' },
-  { id: 12,name: 'Barfi 500g',        category: 'Desi',    price: 350,  image: '🍬' },
-];
 
-// ── DUMMY TODAY'S SALES SUMMARY ───────────────────────────────────────────────
-// TODO: Replace with GET /api/counter-sales?today=true
-const TODAYS_SUMMARY = {
-  totalSales: 12,
-  totalRevenue: 18450,
-  cashSales: 8,
-  cardSales: 2,
-  onlineSales: 2,
-};
 
 // Payment methods — matches CounterSales schema enum
 const PAYMENT_METHODS = ['Cash', 'Card', 'Online'];
@@ -156,10 +126,6 @@ function CounterSales() {
   /**
    * Complete the sale.
    * Saves the sale and clears the order form.
-   * TODO: POST /api/counter-sales {
-   *   branch, cashier, items: orderItems,
-   *   totalAmount: total, paymentMethod
-   * }
    */
   const completeSale = async () => {
     if (orderItems.length === 0) return;
@@ -373,7 +339,6 @@ function CounterSales() {
       </div>
 
       {/* ── Today's Sales Summary ── */}
-      {/* TODO: Replace TODAYS_SUMMARY with real data from GET /api/counter-sales?today=true */}
       <div className="bg-white rounded-xl border border-border shadow-sm p-5">
         <h3 className="font-heading font-bold text-base text-text-dark mb-4">Today's Sales Summary</h3>
         <div className="grid grid-cols-5 gap-4">
@@ -414,8 +379,8 @@ export default CounterSales;
  * Schema fields used (CounterSales model):
  *   branch, cashier, items (name, qty, price), totalAmount, paymentMethod
  *
- * TODO:
+ * Dynamic Data:
  *   - Load products from GET /api/products?isAvailable=true
- *   - On complete: POST /api/counter-sales { items, totalAmount, paymentMethod, branch }
- *   - Load today summary from GET /api/counter-sales?today=true
+ *   - On complete: POST /api/counter { items, totalAmount, paymentMethod, branch }
+ *   - Load today summary from GET /api/counter?today=true
  */

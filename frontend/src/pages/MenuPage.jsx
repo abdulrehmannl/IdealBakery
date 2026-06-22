@@ -156,7 +156,7 @@ function MenuPage() {
                                     {/* Footer row: item count + arrow */}
                                     <div className="flex items-center justify-between mt-auto pt-4 border-t border-border/40">
                                         <span className="text-xs font-bold text-text-light tracking-widest uppercase">
-                                            {category.productCount || 0} Items
+                                            {products.filter(p => p.category && p.category._id === category._id).length} Items
                                         </span>
                                         {/* ArrowRight moves right on hover to show interactivity */}
                                         <ArrowRight
@@ -325,9 +325,9 @@ export default MenuPage;
  *    - useLocation from react-router-dom to detect path changes.
  *    - <Link> wrapping entire cards makes the full card clickable without extra JS.
  *    - Gradient overlays (bg-gradient-to-t) to darken images for readability.
- * 2. Dummy Data:
- *    - `categories` array is hardcoded with dummy item counts and images.
- *    - TODO: Replace with API call to GET /api/categories
+ * 2. Dynamic Data:
+ *    - `categories` array is fetched via API and product counts are dynamically calculated.
+ *    - Uses `GET /api/categories` and `GET /api/products`
  * 3. Navigation:
  *    - Each category links to /menu/<slug> (e.g., /menu/fast-food).
  *    - Special order links go to /special/<slug>.

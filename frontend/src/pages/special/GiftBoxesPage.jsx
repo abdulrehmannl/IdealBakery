@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../../utils/api';
 import { Phone, MessageCircle, ChevronRight, Clock, Gift } from 'lucide-react';
 import ProductCard from '../../components/shared/ProductCard';
 
@@ -13,61 +14,24 @@ import ProductCard from '../../components/shared/ProductCard';
  */
 function GiftBoxesPage() {
 
-    /*
-     * DUMMY PRODUCT DATA — GIFT BOXES
-     * ---------------------------------
-     * TODO (Future API): Replace with GET /api/products?tags=gift-box
-     */
-    const giftBoxes = [
-        {
-            id: 1,
-            name: 'Mithai Luxury Box',
-            description: 'Premium selection of assorted Pakistani sweets in an elegant gold box.',
-            price: 'Rs. 2500',
-            image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=contain&w=500&q=80',
-            badge: 'BESTSELLER',
-        },
-        {
-            id: 2,
-            name: 'Bakery Treats Box',
-            description: 'Handpicked mix of cookies, brownies, macarons, and mini pastries.',
-            price: 'Rs. 1800',
-            image: 'https://images.unsplash.com/photo-1621303837174-89787a7d4729?auto=format&fit=contain&w=500&q=80',
-            badge: null,
-        },
-        {
-            id: 3,
-            name: 'Chocolate Lover\'s Box',
-            description: 'Dark, milk, and white chocolate assortment with chocolate truffles.',
-            price: 'Rs. 2200',
-            image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=contain&w=500&q=80',
-            badge: 'CUSTOMER FAV',
-        },
-        {
-            id: 4,
-            name: 'Small Treat Box (6 pcs)',
-            description: 'A small, affordable gift box — perfect for birthdays and "just because" moments.',
-            price: 'Rs. 950',
-            image: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=contain&w=500&q=80',
-            badge: null,
-        },
-        {
-            id: 5,
-            name: 'Eid Special Gift Box',
-            description: 'Festive tin filled with sheer khurma cookies, barfi, and dry fruits.',
-            price: 'Rs. 3000',
-            image: 'https://images.unsplash.com/photo-1559598467-f8b76c8155d0?auto=format&fit=contain&w=500&q=80',
-            badge: 'SEASONAL',
-        },
-        {
-            id: 6,
-            name: 'Corporate Gift Hamper',
-            description: 'Large branded hamper — ideal for corporate gifting. Minimum order: 10 pcs.',
-            price: 'From Rs. 3500',
-            image: 'https://images.unsplash.com/photo-1467189741329-9295f21bbd41?auto=format&fit=contain&w=500&q=80',
-            badge: 'BULK ORDER',
-        },
-    ];
+    const [giftBoxes, setGiftBoxes] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchGiftBoxes = async () => {
+            try {
+                const res = await api.get('/api/products?tags=gift-box');
+                if (res.data.success) {
+                    setGiftBoxes(res.data.data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch gift boxes:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchGiftBoxes();
+    }, []);
 
     return (
         <div className="min-h-screen font-body" style={{ backgroundColor: '#F5F0EB' }}>
@@ -155,9 +119,25 @@ function GiftBoxesPage() {
                          * Using 3 columns here (instead of 4) because there are only 6 items
                          * and gift boxes look better with slightly larger cards.
                          */}
-                        {giftBoxes.map((box) => (
-                            <ProductCard key={box.id} product={box} />
-                        ))}
+                        {isLoading ? (
+                            <div className="col-span-full text-center py-12 text-text-light">Loading gift boxes...</div>
+                        ) : giftBoxes.length > 0 ? (
+                            giftBoxes.map((box) => (
+                                <ProductCard 
+                                    key={box._id} 
+                                    product={{
+                                        id: box._id,
+                                        name: box.name,
+                                        description: box.description,
+                                        price: `Rs. ${box.price}`,
+                                        image: box.image || 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=contain&w=500&q=80',
+                                        badge: box.tags && box.tags.length > 0 ? box.tags[0].toUpperCase() : null
+                                    }} 
+                                />
+                            ))
+                        ) : (
+                            <div className="col-span-full text-center py-12 text-text-light">No gift boxes found.</div>
+                        )}
                     </div>
                 </div>
             </section>
@@ -215,7 +195,6 @@ export default GiftBoxesPage;
  * 1. Concepts used:
  *    - Full special-order page with hero, notice bar, product grid, and perks section.
  *    - 3-column grid (lg:grid-cols-3) since only 6 items — better visual balance than 4-col.
- * 2. Dummy Data: 6 gift box products with Rs. pricing.
+ * 2. Dynamic Data: Fetched from GET /api/products?tags=gift-box
  * 3. Route: /special/gift-boxes
- * 4. Future API: GET /api/products?tags=gift-box
  */

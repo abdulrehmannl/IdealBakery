@@ -16,16 +16,7 @@ import api from '../../utils/api';
  *   DELETE /api/discounts/:id     → delete discount
  */
 
-// ── DUMMY DATA ────────────────────────────────────────────────────────────────
-// TODO: Replace with GET /api/discounts
-// Fields match Discount mongoose schema:
-//   title, description, discountType, value, product, startDate, endDate, isActive
-const INITIAL_DISCOUNTS = [
-  { id: 1, title: 'Eid Special',       description: 'Eid discount on all cakes',    discountType: 'percentage', value: 15, product: 'All Cakes',        startDate: '2026-04-05', endDate: '2026-04-10', isActive: true  },
-  { id: 2, title: 'Friday Deal',       description: 'Flat off on burgers Fridays',  discountType: 'flat',       value: 50, product: 'Zinger Burger',    startDate: '2026-04-04', endDate: '2026-04-30', isActive: true  },
-  { id: 3, title: 'Summer Shake Off',  description: '20% off milkshakes in summer', discountType: 'percentage', value: 20, product: 'Mango Milkshake',  startDate: '2026-05-01', endDate: '2026-08-31', isActive: false },
-  { id: 4, title: 'New Year Offer',    description: 'Flat Rs.100 off on any cake',  discountType: 'flat',       value: 100,product: 'Black Forest Cake', startDate: '2025-12-31', endDate: '2026-01-03', isActive: false },
-];
+
 
 const EMPTY_FORM = {
   title: '', description: '', discountType: 'percentage',
