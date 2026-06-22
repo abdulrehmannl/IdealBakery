@@ -99,15 +99,23 @@ connectDB();
 // Think of them as "checkpoints" — every request passes through these first.
 
 // ── 5a. CORS (Cross-Origin Resource Sharing) ──
-app.use(cors({
-    origin: process.env.FRONTEND_URL,
-    // Reads the allowed origin from .env — works for both local dev and production.
-    // Local:      FRONTEND_URL=http://localhost:5173
-    // Production: FRONTEND_URL=https://your-app.vercel.app
+const allowedOrigins = [
+    'http://localhost:5173',
+    'https://idealbakery.me',
+    'https://www.idealbakery.me',
+    process.env.FRONTEND_URL
+];
 
+app.use(cors({
+    origin: function(origin, callback) {
+        // Allow requests with no origin or if origin is in our allowed list
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('CORS policy violation: origin not allowed'));
+        }
+    },
     credentials: true,
-    // Allows the frontend to send cookies and Authorization headers.
-    // Required for httpOnly JWT cookie authentication to work properly.
 }));
 
 // ── 5b. Helmet — secure HTTP headers ──
