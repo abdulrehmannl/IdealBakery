@@ -76,7 +76,7 @@ function GiftBoxesPage() {
                             CALL TO ORDER
                         </a>
                         <a
-                            href="https://wa.me/923234404773"
+                            href="https://wa.me/923234404772"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 bg-[#25D366] text-white px-6 py-3 rounded font-bold text-sm tracking-widest hover:bg-[#1EBE5B] transition-colors shadow-lg"
