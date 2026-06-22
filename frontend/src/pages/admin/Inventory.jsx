@@ -143,9 +143,9 @@ const Inventory = () => {
         <div className="flex items-center gap-3">
           {/* Branch filter tabs */}
           <div className="flex gap-1 bg-white border border-border rounded-lg p-1 shadow-sm">
-            {['All', ...(branchesList || []).map(b => b.name)].map(b => (
+            {['All', ...(branchesList || []).map(b => b.name)].map((b, idx) => (
               <button
-                key={b}
+                key={`${b}-${idx}`}
                 onClick={() => setBranch(b)}
                 className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-150 ${
                   branch === b ? 'text-white' : 'text-text-light hover:text-text-dark'

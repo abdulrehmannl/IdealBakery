@@ -32,7 +32,7 @@ const NAV_ITEMS = [
     { label: 'Machinery',     path: '/admin/machinery',  Icon: Settings,        allowedRoles: ['admin', 'manager'] },
     { label: 'Counter Sales', path: '/admin/counter',    Icon: Monitor,         allowedRoles: ['admin', 'manager', 'staff'] },
     { label: 'Reports',       path: '/admin/reports',    Icon: BarChart2,       allowedRoles: ['admin', 'manager'] },
-    { label: 'Staff Leave',   path: '/admin/leaves',     Icon: Clock,           allowedRoles: ['admin', 'manager', 'staff'] },
+    { label: 'Staff Leave',   path: '/admin/leaves',     Icon: Clock,           allowedRoles: ['admin', 'manager', 'staff', 'delivery'] },
     { label: 'Expenses',      path: '/admin/expenses',   Icon: Receipt,         allowedRoles: ['admin'] },
     { label: 'Discounts',     path: '/admin/discounts',  Icon: Tag,             allowedRoles: ['admin', 'manager'] },
     { label: 'Branches',      path: '/admin/branches',   Icon: MapPin,          allowedRoles: ['admin'] },

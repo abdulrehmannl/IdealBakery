@@ -6,7 +6,7 @@ const ROLES = ['manager', 'staff', 'delivery', 'admin'];
 const BRANCHES = ['6659c2522765874288b8131d', '6659c2522765874288b8131e']; // Need real branch IDs, but falling back to text if needed. Wait, in reality we should fetch branches. For now, the user uses 'Branch 1', 'Branch 2' text if branch is not populated, but the API expects an ObjectId. Let me fetch branches dynamically.
 
 const EMPTY_FORM = {
-  name: '', phone: '', password: '', role: 'staff', branch: '', isActive: true, jobTitle: ''
+  name: '', phone: '', password: '', role: 'staff', branch: '', isActive: true, jobTitle: '', baseSalary: 22000
 };
 
 function ManageStaff() {
@@ -59,6 +59,7 @@ function ManageStaff() {
       password: '', // Blank unless they want to change it
       role: member.role, 
       jobTitle: member.jobTitle || '',
+      baseSalary: member.baseSalary || '',
       branch: member.branch ? (member.branch._id || member.branch) : (branches.length > 0 ? branches[0]._id : ''), 
       isActive: member.isActive 
     }); 
@@ -69,7 +70,18 @@ function ManageStaff() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    
+    // Auto-fill default salary when role changes (only if adding a new user)
+    if (name === 'role' && editId === null) {
+      let defaultSalary = 20000;
+      if (value === 'manager') defaultSalary = 35000;
+      else if (value === 'staff') defaultSalary = 22000;
+      else if (value === 'delivery') defaultSalary = 20000;
+      
+      setForm(prev => ({ ...prev, [name]: value, baseSalary: defaultSalary }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -78,7 +90,7 @@ function ManageStaff() {
     try {
       if (editId) {
         // Update user
-        const updateData = { name: form.name, phone: form.phone, isActive: form.isActive, jobTitle: form.jobTitle };
+        const updateData = { name: form.name, phone: form.phone, isActive: form.isActive, jobTitle: form.jobTitle, baseSalary: Number(form.baseSalary) };
         if (form.password) updateData.password = form.password; // Only send if filled
         // Note: userController PUT /api/users/:id does not natively update role/branch, but let's send it anyway
         await api.put(`/api/users/${editId}`, updateData);
@@ -90,6 +102,7 @@ function ManageStaff() {
           password: form.password,
           role: form.role,
           jobTitle: form.jobTitle,
+          baseSalary: Number(form.baseSalary),
           branch: form.branch
         });
       }
@@ -245,6 +258,19 @@ function ManageStaff() {
                       <option value="Rider" />
                       <option value="Driver" />
                     </datalist>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-text-light mb-1 uppercase">Base Salary (Rs.) *</label>
+                    <input 
+                      name="baseSalary" 
+                      type="number"
+                      value={form.baseSalary} 
+                      onChange={handleChange} 
+                      required 
+                      min="0"
+                      className="w-full px-3 py-2 border border-border rounded-lg" 
+                    />
                   </div>
 
               {editId && (

@@ -110,6 +110,7 @@ function Expenses() {
       });
     } catch (err) {
       console.error(err);
+      alert(err.response?.data?.message || "Failed to add expense.");
     }
   };
 
@@ -138,8 +139,8 @@ function Expenses() {
           </select>
           {/* Branch filter */}
           <div className="flex gap-1 bg-white border border-border rounded-lg p-1 shadow-sm">
-            {['All', ...(branchesList || []).map(b => b.name)].map(b => (
-              <button key={b} onClick={() => setBranch(b)}
+            {['All', ...(branchesList || []).map(b => b.name)].map((b, idx) => (
+              <button key={`${b}-${idx}`} onClick={() => setBranch(b)}
                 className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-150 ${branch === b ? 'text-white' : 'text-text-light hover:text-text-dark'}`}
                 style={branch === b ? { backgroundColor: '#8B1A1A' } : {}}>
                 {b}
@@ -256,8 +257,8 @@ function Expenses() {
               </div>
               {/* Paid By */}
               <div className="col-span-2">
-                <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Paid By</label>
-                <input name="paidBy" value={form.paidBy} onChange={handleChange} placeholder="Staff name"
+                <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Paid By *</label>
+                <input name="paidBy" value={form.paidBy} onChange={handleChange} placeholder="Staff name" required
                   className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
               </div>
               {/* Notes */}

@@ -67,9 +67,20 @@ function Branches() {
                                     </div>
                                 </div>
 
-                                <button className="mt-8 w-full px-6 py-3 bg-text-dark text-white font-bold text-sm tracking-wide hover:bg-primary transition-colors rounded">
-                                    GET DIRECTIONS
-                                </button>
+                                {branch.googleMapsLink ? (
+                                    <a 
+                                        href={branch.googleMapsLink} 
+                                        target="_blank" 
+                                        rel="noreferrer"
+                                        className="mt-8 w-full block text-center px-6 py-3 bg-text-dark text-white font-bold text-sm tracking-wide hover:bg-primary transition-colors rounded"
+                                    >
+                                        GET DIRECTIONS
+                                    </a>
+                                ) : (
+                                    <button className="mt-8 w-full px-6 py-3 bg-text-dark text-white font-bold text-sm tracking-wide hover:bg-primary transition-colors rounded">
+                                        GET DIRECTIONS
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}

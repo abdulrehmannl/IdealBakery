@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Minus, Trash2, ShoppingCart } from 'lucide-react';
 import api from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 
 /**
  * CounterSales (POS) Page
@@ -48,6 +49,8 @@ const TODAYS_SUMMARY = {
 const PAYMENT_METHODS = ['Cash', 'Card', 'Online'];
 
 function CounterSales() {
+  const { user } = useAuth();
+
   // ── State ──────────────────────────────────────────────────────────────────
   const [search, setSearch]             = useState('');       // product search text
   const [orderItems, setOrderItems]     = useState([]);       // items added to current order
@@ -61,12 +64,14 @@ function CounterSales() {
     cardSales: 0,
     onlineSales: 0,
   });
+  const [branches, setBranches] = useState([]);
 
   const fetchInitialData = async () => {
     try {
-      const [prodRes, summaryRes] = await Promise.all([
+      const [prodRes, summaryRes, branchRes] = await Promise.all([
         api.get('/api/products?isAvailable=true'),
-        api.get('/api/counter?today=true')
+        api.get('/api/counter?today=true'),
+        api.get('/api/branches')
       ]);
       
       if (prodRes.data.success) {
@@ -91,6 +96,9 @@ function CounterSales() {
           cardSales,
           onlineSales
         });
+      }
+      if (branchRes.data.success) {
+        setBranches(branchRes.data.data || branchRes.data.branches);
       }
     } catch (err) {
       console.error(err);
@@ -156,10 +164,18 @@ function CounterSales() {
   const completeSale = async () => {
     if (orderItems.length === 0) return;
     try {
+      const saleBranch = user?.branch?._id || user?.branch || (branches.length > 0 ? branches[0]._id : null);
+      if (!saleBranch) {
+        alert("No branch available for this sale.");
+        return;
+      }
+      
       await api.post('/api/counter', {
-        items: orderItems.map(i => ({ product: i.id, qty: i.qty, price: i.price, name: i.name })),
+        branch: saleBranch,
+        staff: user?._id || user?.id,
+        items: orderItems.map(i => ({ product: i.id, quantity: i.qty, price: i.price, name: i.name })),
         totalAmount: total,
-        paymentMethod
+        paymentMethod: paymentMethod.toLowerCase()
       });
       setSaleComplete(true);
       setOrderItems([]);
@@ -169,6 +185,7 @@ function CounterSales() {
       setTimeout(() => setSaleComplete(false), 3000);
     } catch (err) {
       console.error(err);
+      alert(err.response?.data?.message || "Failed to complete sale. Check console.");
     }
   };
 

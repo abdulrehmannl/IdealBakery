@@ -61,8 +61,8 @@ const ManageProducts = () => {
                 setProducts(prodRes.data.data.map(p => ({
                     ...p,
                     id: p._id,
-                    branch: p.branch && p.branch.length ? p.branch.map(b => b.name).join(', ') : 'Both',
-                    category: p.category ? p.category.name : 'Unknown'
+                    branchName: p.branch && p.branch.length ? p.branch.map(b => b.name).join(', ') : 'Both',
+                    categoryName: p.category ? p.category.name : 'Unknown'
                 })));
             }
         } catch (err) {
@@ -77,7 +77,7 @@ const ManageProducts = () => {
     // ── Derived: filtered product list ──
     const filtered = products.filter(p => {
         const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-        const matchCat    = filterCat === 'All' || p.category === filterCat;
+        const matchCat    = filterCat === 'All' || p.categoryName === filterCat;
         return matchSearch && matchCat;
     });
 
@@ -94,9 +94,17 @@ const ManageProducts = () => {
 
     // ── Open Edit form pre-filled with product data ──
     const openEdit = (product) => {
-        setForm({ 
-            ...product, 
-            tags: product.tags ? product.tags.join(', ') : '',
+        setForm({
+            name: product.name,
+            description: product.description || '',
+            price: product.price,
+            discount: product.discount || 0,
+            weight: product.weight || '',
+            stock: product.stock || 0,
+            tags: product.tags && Array.isArray(product.tags) ? product.tags.join(', ') : '',
+            isAvailable: product.isAvailable,
+            isSugarFree: product.isSugarFree,
+            image: product.image || '',
             category: product.category && typeof product.category === 'object' ? product.category._id : product.category,
             branch: product.branch && Array.isArray(product.branch) && product.branch[0] ? product.branch[0]._id : product.branch
         });
@@ -218,7 +226,7 @@ const ManageProducts = () => {
                                         {product.name}
                                         {product.stock < 10 && <span className="ml-2 text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded uppercase tracking-wider">Low Stock</span>}
                                     </td>
-                                    <td className="px-4 py-3 text-text-light text-xs">{product.category}</td>
+                                    <td className="px-4 py-3 text-text-light text-xs">{product.categoryName}</td>
                                     <td className="px-4 py-3 font-semibold">Rs. {product.price}</td>
                                     <td className="px-4 py-3 text-text-light">{product.discount}%</td>
                                     <td className="px-4 py-3">
@@ -226,7 +234,7 @@ const ManageProducts = () => {
                                             {product.stock}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3 text-text-light text-xs">{product.branch}</td>
+                                    <td className="px-4 py-3 text-text-light text-xs">{product.branchName}</td>
                                     <td className="px-4 py-3">
                                         <span className={`px-2 py-1 rounded-full text-xs font-bold ${product.isAvailable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                                             {product.isAvailable ? 'Active' : 'Inactive'}

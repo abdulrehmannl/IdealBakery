@@ -118,7 +118,7 @@ function AppLayout() {
           <Route path="/admin/machinery"   element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><Machinery /></AdminLayout></ProtectedRoute>} />
           <Route path="/admin/counter"     element={<ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><AdminLayout><CounterSales /></AdminLayout></ProtectedRoute>} />
           <Route path="/admin/reports"     element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><Reports /></AdminLayout></ProtectedRoute>} />
-          <Route path="/admin/leaves"      element={<ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><AdminLayout><StaffLeave /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/leaves"      element={<ProtectedRoute allowedRoles={['admin', 'manager', 'staff', 'delivery']}><AdminLayout><StaffLeave /></AdminLayout></ProtectedRoute>} />
           <Route path="/admin/expenses"    element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Expenses /></AdminLayout></ProtectedRoute>} />
           <Route path="/admin/discounts"   element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><ManageDiscounts /></AdminLayout></ProtectedRoute>} />
           <Route path="/admin/branches"    element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><ManageBranches /></AdminLayout></ProtectedRoute>} />

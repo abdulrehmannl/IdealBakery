@@ -162,7 +162,10 @@ function Machinery() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const parsed = { ...form, purchaseCost: Number(form.purchaseCost) };
+    const parsed = { ...form, condition: form.condition.toLowerCase() };
+    if (form.purchaseCost) parsed.purchaseCost = Number(form.purchaseCost);
+    if (!parsed.purchaseDate) delete parsed.purchaseDate;
+    if (!parsed.warrantyExpiry) delete parsed.warrantyExpiry;
     try {
       if (editId !== null) {
         await api.put(`/api/machinery/${editId}`, parsed);
@@ -173,6 +176,7 @@ function Machinery() {
       setShowForm(false);
     } catch (err) {
       console.error(err);
+      alert(err.response?.data?.message || "Failed to add machine.");
     }
   };
 
@@ -198,9 +202,9 @@ function Machinery() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Branch filter tabs */}
         <div className="flex gap-1 bg-white border border-border rounded-lg p-1 shadow-sm">
-          {['All', ...(branchesList || []).map(b => b.name)].map(b => (
+          {['All', ...(branchesList || []).map(b => b.name)].map((b, idx) => (
             <button
-              key={b}
+              key={`${b}-${idx}`}
               onClick={() => setBranch(b)}
               className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-150 ${
                 branch === b ? 'text-white' : 'text-text-light hover:text-text-dark'

@@ -94,7 +94,7 @@ function Salaries() {
       await api.put(`/api/salaries/${id}/pay`);
       const today = new Date().toISOString().split('T')[0];
       setSalaries(prev =>
-        prev.map(s => s.id === id ? { ...s, status: 'Paid', paidOn: today } : s)
+        prev.map(s => s.id === id ? { ...s, status: 'paid', paidOn: today } : s)
       );
     } catch (err) {
       console.error(err);
@@ -102,9 +102,9 @@ function Salaries() {
   };
 
   // ── Summary totals ──────────────────────────────────────────────────────────
-  const totalNet     = salaries.reduce((sum, s) => sum + (s.basicSalary + s.bonus - s.deductions), 0);
-  const totalPaid    = salaries.filter(s => s.status === 'Paid').reduce((sum, s) => sum + (s.basicSalary + s.bonus - s.deductions), 0);
-  const totalPending = salaries.filter(s => s.status === 'Pending').reduce((sum, s) => sum + (s.basicSalary + s.bonus - s.deductions), 0);
+  const totalNet     = salaries.reduce((sum, s) => sum + ((s.basicSalary || 0) + (s.bonus || 0) - (s.deductions || 0)), 0);
+  const totalPaid    = salaries.filter(s => s.status?.toLowerCase() === 'paid').reduce((sum, s) => sum + ((s.basicSalary || 0) + (s.bonus || 0) - (s.deductions || 0)), 0);
+  const totalPending = salaries.filter(s => s.status?.toLowerCase() === 'pending').reduce((sum, s) => sum + ((s.basicSalary || 0) + (s.bonus || 0) - (s.deductions || 0)), 0);
 
   return (
     <div className="space-y-5">
@@ -181,9 +181,16 @@ function Salaries() {
                     {/* Branch */}
                     <td className="px-4 py-3 text-text-light text-xs">{s.branch}</td>
 
-                    {/* Basic Salary (read-only — set when staff is added) */}
-                    <td className="px-4 py-3 font-semibold text-text-dark">
-                      Rs. {s.basicSalary.toLocaleString()}
+                    {/* Basic Salary (editable input) */}
+                    <td className="px-4 py-3">
+                      <input
+                        type="number"
+                        value={s.basicSalary}
+                        onChange={e => updateField(s.id, 'basicSalary', e.target.value)}
+                        min="0"
+                        disabled={s.status?.toLowerCase() === 'paid'}
+                        className="w-24 px-2 py-1.5 border border-border rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-primary/30 disabled:bg-gray-50 disabled:text-text-light"
+                      />
                     </td>
 
                     {/* Bonus (editable input) */}
@@ -193,7 +200,7 @@ function Salaries() {
                         value={s.bonus}
                         onChange={e => updateField(s.id, 'bonus', e.target.value)}
                         min="0"
-                        disabled={s.status === 'Paid'}
+                        disabled={s.status?.toLowerCase() === 'paid'}
                         className="w-24 px-2 py-1.5 border border-border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary/30 disabled:bg-gray-50 disabled:text-text-light"
                       />
                     </td>
@@ -205,7 +212,7 @@ function Salaries() {
                         value={s.deductions}
                         onChange={e => updateField(s.id, 'deductions', e.target.value)}
                         min="0"
-                        disabled={s.status === 'Paid'}
+                        disabled={s.status?.toLowerCase() === 'paid'}
                         className="w-24 px-2 py-1.5 border border-border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary/30 disabled:bg-gray-50 disabled:text-text-light"
                       />
                     </td>
@@ -217,13 +224,13 @@ function Salaries() {
 
                     {/* Status badge */}
                     <td className="px-4 py-3">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                        s.status === 'Paid'
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold capitalize ${
+                        s.status?.toLowerCase() === 'paid'
                           ? 'bg-green-100 text-green-700'
                           : 'bg-yellow-100 text-yellow-700'
                       }`}>
                         {s.status}
-                        {s.status === 'Paid' && s.paidOn && (
+                        {s.status?.toLowerCase() === 'paid' && s.paidOn && (
                           <span className="ml-1 font-normal text-[10px]">({s.paidOn})</span>
                         )}
                       </span>
@@ -231,7 +238,7 @@ function Salaries() {
 
                     {/* Mark as Paid button — disabled if already paid */}
                     <td className="px-4 py-3">
-                      {s.status === 'Pending' ? (
+                      {s.status?.toLowerCase() === 'pending' ? (
                         <button
                           onClick={() => markPaid(s.id)}
                           className="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-bold rounded-lg hover:opacity-90 transition-opacity shadow-sm"

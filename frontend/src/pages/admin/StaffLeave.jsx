@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, Plus } from 'lucide-react';
 import api from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 
 /**
  * StaffLeave Page
@@ -10,26 +11,7 @@ import api from '../../utils/api';
  *   BOTTOM: All leave history
  *
  * Route: /admin/leaves
- *
- * TODO: Connect to:
- *   GET /api/leaves              → load all leave requests
- *   PUT /api/leaves/:id/approve → approve a leave
- *   PUT /api/leaves/:id/reject  → reject a leave
  */
-
-// ── DUMMY DATA ────────────────────────────────────────────────────────────────
-// TODO: Replace with GET /api/leaves
-// Fields match StaffLeave mongoose schema:
-//   staff, leaveType, startDate, endDate, reason, status
-const INITIAL_LEAVES = [
-  { id: 1, staffName: 'Sara Ahmed',   role: 'Cashier',  leaveType: 'sick',      startDate: '2026-04-06', endDate: '2026-04-07', reason: 'High fever and cold',              status: 'Pending'  },
-  { id: 2, staffName: 'Imran Mirza',  role: 'Delivery', leaveType: 'casual',    startDate: '2026-04-08', endDate: '2026-04-08', reason: 'Family event',                     status: 'Pending'  },
-  { id: 3, staffName: 'Nadia Kausar', role: 'Waiter',   leaveType: 'emergency', startDate: '2026-04-05', endDate: '2026-04-05', reason: 'Family emergency',                  status: 'Pending'  },
-  { id: 4, staffName: 'Ali Hassan',   role: 'Manager',  leaveType: 'casual',    startDate: '2026-03-20', endDate: '2026-03-21', reason: 'Personal work',                    status: 'Approved' },
-  { id: 5, staffName: 'Kamran Baig',  role: 'Chef',     leaveType: 'sick',      startDate: '2026-03-15', endDate: '2026-03-16', reason: 'Doctor appointment',               status: 'Approved' },
-  { id: 6, staffName: 'Zara Malik',   role: 'Cleaner',  leaveType: 'unpaid',    startDate: '2026-03-10', endDate: '2026-03-12', reason: 'Personal trip',                    status: 'Rejected' },
-  { id: 7, staffName: 'Sara Ahmed',   role: 'Cashier',  leaveType: 'sick',      startDate: '2026-02-25', endDate: '2026-02-25', reason: 'Severe headache',                  status: 'Approved' },
-];
 
 // Badge styles for each leave type
 const TYPE_COLORS = {
@@ -39,22 +21,39 @@ const TYPE_COLORS = {
   unpaid:    'bg-gray-100 text-gray-600',
 };
 
-// Badge styles for each status
+// Badge styles for each status (lowercase as from backend)
 const STATUS_COLORS = {
-  Pending:  'bg-yellow-100 text-yellow-700 border border-yellow-200',
-  Approved: 'bg-green-100 text-green-700 border border-green-200',
-  Rejected: 'bg-red-100 text-red-600 border border-red-200',
+  pending:  'bg-yellow-100 text-yellow-700 border border-yellow-200',
+  approved: 'bg-green-100 text-green-700 border border-green-200',
+  rejected: 'bg-red-100 text-red-600 border border-red-200',
 };
 
 function StaffLeave() {
+  const { user } = useAuth();
+  const isAdminOrManager = user?.role === 'admin' || user?.role === 'manager';
+  
   const [leaves, setLeaves] = useState([]);
+  const [staffList, setStaffList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    staff: '', leaveType: 'casual', startDate: '', endDate: '', reason: ''
+  });
 
-  const fetchLeaves = async () => {
+  const fetchInitialData = async () => {
     try {
-      const res = await api.get('/api/leaves');
-      if (res.data.success) {
-        setLeaves(res.data.data.map(l => ({
+      const [leavesRes, staffRes] = await Promise.all([
+        api.get('/api/leaves'),
+        api.get('/api/users')
+      ]);
+
+      if (staffRes.data.success) {
+        setStaffList(staffRes.data.users);
+      }
+      
+      if (leavesRes.data.success) {
+        setLeaves(leavesRes.data.data.map(l => ({
           ...l,
           id: l._id,
           staffName: l.staff?.name || 'Unknown',
@@ -70,31 +69,68 @@ function StaffLeave() {
     }
   };
 
-  useEffect(() => { fetchLeaves(); }, []);
+  useEffect(() => { fetchInitialData(); }, []);
+
+  let filteredStaffList = isAdminOrManager 
+    ? staffList 
+    : staffList.filter(s => String(s._id) === String(user?.id || user?._id));
+
+  // Fallback: If we couldn't find the user in the fetched list for any reason, force add them
+  // so they can still submit leaves using their own ID.
+  if (!isAdminOrManager && filteredStaffList.length === 0 && user) {
+    filteredStaffList = [{ _id: user.id || user._id, name: user.name, role: user.role }];
+  }
+
+  const visibleLeaves = isAdminOrManager
+    ? leaves
+    : leaves.filter(l => {
+        const leaveStaffId = typeof l.staff === 'object' ? l.staff?._id : l.staff;
+        return String(leaveStaffId) === String(user?.id || user?._id);
+      });
 
   // Pending requests needing action
-  const pending = leaves.filter(l => l.status === 'Pending');
+  const pending = visibleLeaves.filter(l => l.status === 'pending');
 
   // All other leaves (history)
-  const history = leaves.filter(l => l.status !== 'Pending');
+  const history = visibleLeaves.filter(l => l.status !== 'pending');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('/api/leaves', form);
+      setShowForm(false);
+      setForm({ staff: staffList.length > 0 ? staffList[0]._id : '', leaveType: 'casual', startDate: '', endDate: '', reason: '' });
+      fetchInitialData();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to add leave request.');
+    }
+  };
 
   // Approve a leave request
   const approve = async (id) => {
     try {
-      await api.put(`/api/leaves/${id}/approve`);
-      setLeaves(prev => prev.map(l => l.id === id ? { ...l, status: 'Approved' } : l));
+      await api.put(`/api/leaves/${id}`, { status: 'approved' });
+      fetchInitialData();
     } catch (err) {
       console.error(err);
+      alert(err.response?.data?.message || 'Failed to approve');
     }
   };
 
   // Reject a leave request
   const reject = async (id) => {
     try {
-      await api.put(`/api/leaves/${id}/reject`);
-      setLeaves(prev => prev.map(l => l.id === id ? { ...l, status: 'Rejected' } : l));
+      await api.put(`/api/leaves/${id}`, { status: 'rejected' });
+      fetchInitialData();
     } catch (err) {
       console.error(err);
+      alert(err.response?.data?.message || 'Failed to reject');
     }
   };
 
@@ -121,7 +157,7 @@ function StaffLeave() {
 
       {/* Right side: status + action buttons */}
       <div className="flex items-center gap-2 shrink-0">
-        {showActions ? (
+        {showActions && isAdminOrManager ? (
           // Approve / Reject buttons for pending requests
           <>
             <button
@@ -139,7 +175,7 @@ function StaffLeave() {
           </>
         ) : (
           // Status badge for history
-          <span className={`text-xs font-bold px-3 py-1 rounded-full ${STATUS_COLORS[leave.status]}`}>
+          <span className={`text-xs font-bold px-3 py-1 rounded-full capitalize ${STATUS_COLORS[leave.status]}`}>
             {leave.status}
           </span>
         )}
@@ -147,8 +183,27 @@ function StaffLeave() {
     </div>
   );
 
+  if (isLoading) return <div className="p-8 text-center text-text-light">Loading...</div>;
+
   return (
     <div className="space-y-6">
+
+      <div className="flex justify-end">
+        <button
+          onClick={() => {
+            if (!isAdminOrManager && filteredStaffList.length === 0) {
+              alert("Your staff profile could not be found in the system. Please ensure your name or phone number exactly matches the Staff records, or contact an Administrator.");
+              return;
+            }
+            setForm(prev => ({ ...prev, staff: filteredStaffList.length > 0 ? filteredStaffList[0]._id : '' }));
+            setShowForm(true);
+          }}
+          className="flex items-center gap-2 px-4 py-2.5 text-white text-sm font-bold rounded-lg hover:opacity-90 transition-opacity shadow-sm"
+          style={{ backgroundColor: '#8B1A1A' }}
+        >
+          <Plus size={16} /> Add Leave Request
+        </button>
+      </div>
 
       {/* ══════════════════════════
           TOP: Pending Requests
@@ -196,27 +251,76 @@ function StaffLeave() {
         )}
       </div>
 
+      {/* ── Add Leave Modal ── */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <h3 className="font-heading font-bold text-xl text-text-dark">Apply for Leave</h3>
+              <button onClick={() => setShowForm(false)} className="p-2 rounded-lg hover:bg-secondary transition-colors"><X size={18} /></button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-6 grid grid-cols-2 gap-4">
+              {isAdminOrManager ? (
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Staff Member *</label>
+                  <select name="staff" value={form.staff} onChange={handleChange} required
+                    className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                    <option value="" disabled>Select Staff</option>
+                    {staffList.map(s => <option key={s._id} value={s._id}>{s.name} ({s.role})</option>)}
+                  </select>
+                </div>
+              ) : (
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Staff Member</label>
+                  <div className="w-full px-3 py-2.5 border border-border rounded-lg text-sm bg-gray-50 text-text-light">
+                    {user?.name} ({user?.role})
+                  </div>
+                  {/* Hidden input to ensure form submission has the value if needed, though form state handles it */}
+                </div>
+              )}
+              <div className="col-span-2">
+                <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Leave Type *</label>
+                <select name="leaveType" value={form.leaveType} onChange={handleChange} required
+                  className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                  <option value="sick">Sick Leave</option>
+                  <option value="casual">Casual Leave</option>
+                  <option value="emergency">Emergency Leave</option>
+                  <option value="unpaid">Unpaid Leave</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Start Date *</label>
+                <input name="startDate" type="date" value={form.startDate} onChange={handleChange} required
+                  className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">End Date *</label>
+                <input name="endDate" type="date" value={form.endDate} onChange={handleChange} required
+                  className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Reason *</label>
+                <textarea name="reason" value={form.reason} onChange={handleChange} rows={3} required
+                  className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
+              </div>
+              <div className="col-span-2 flex gap-3 pt-2">
+                <button type="submit"
+                  className="flex items-center gap-2 px-6 py-2.5 text-white font-bold text-sm rounded-lg hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: '#8B1A1A' }}>
+                  <Check size={15} /> Submit Leave Request
+                </button>
+                <button type="button" onClick={() => setShowForm(false)}
+                  className="px-6 py-2.5 border border-border text-text-light font-bold text-sm rounded-lg hover:bg-secondary transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
 
 export default StaffLeave;
-
-/*
- * END OF FILE SUMMARY
- * =====================
- * Route:    /admin/leaves
- * Features:
- *   - TOP section: Pending requests with Approve / Reject buttons
- *   - BOTTOM section: Approved / Rejected history with status badges
- *   - Leave type badges: sick, casual, emergency, unpaid
- *   - Status badges: Pending (yellow), Approved (green), Rejected (red)
- *
- * Schema fields used (StaffLeave model):
- *   staff, leaveType, startDate, endDate, reason, status
- *
- * TODO:
- *   - GET /api/leaves to load all leave requests
- *   - PUT /api/leaves/:id/approve
- *   - PUT /api/leaves/:id/reject
- */
