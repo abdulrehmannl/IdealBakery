@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Check, DollarSign } from 'lucide-react';
 import api from '../../utils/api';
 
@@ -11,7 +11,7 @@ import api from '../../utils/api';
  *
  * Route: /admin/salaries
  *
- * TODO: Connect to:
+ * API:
  *   GET  /api/salaries?month=MM&year=YYYY  → load salary records
  *   PUT  /api/salaries/:id                 → update bonus/deductions
  *   PUT  /api/salaries/:id/pay             → mark as paid
@@ -33,6 +33,7 @@ function Salaries() {
 
   const [salaries, setSalaries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const debounceTimers = useRef({});
 
   const fetchSalaries = async () => {
     try {
@@ -60,23 +61,33 @@ function Salaries() {
   /**
    * Update bonus or deductions for a specific record.
    * Net salary is always recalculated from these values.
+   * Debounced: API call fires 600ms after the user stops typing.
    */
-  const updateField = async (id, field, value) => {
+  const updateField = (id, field, value) => {
     const numericValue = Number(value) || 0;
+    // Optimistic UI update immediately
     setSalaries(prev =>
       prev.map(s => s.id === id ? { ...s, [field]: numericValue } : s)
     );
-    try {
-      await api.put(`/api/salaries/${id}`, { [field]: numericValue });
-    } catch (err) {
-      console.error(err);
+    // Cancel any pending timer for this record+field
+    const timerKey = `${id}_${field}`;
+    if (debounceTimers.current[timerKey]) {
+      clearTimeout(debounceTimers.current[timerKey]);
     }
+    // Schedule API call 600ms after last keystroke
+    debounceTimers.current[timerKey] = setTimeout(async () => {
+      try {
+        await api.put(`/api/salaries/${id}`, { [field]: numericValue });
+      } catch (err) {
+        console.error('Failed to update salary field:', err);
+      }
+      delete debounceTimers.current[timerKey];
+    }, 600);
   };
 
   /**
    * Mark a salary record as Paid.
    * Sets status = 'Paid' and records today's date as paidOn.
-   * TODO: PUT /api/salaries/:id/pay
    */
   const markPaid = async (id) => {
     try {
@@ -270,9 +281,4 @@ export default Salaries;
  *
  * Schema fields used (Salary model):
  *   staff, month, year, basicSalary, bonus, deductions, netSalary, status, paidOn
- *
- * TODO:
- *   - On month/year change: GET /api/salaries?month=&year=
- *   - On field change: PUT /api/salaries/:id { bonus, deductions }
- *   - On mark paid: PUT /api/salaries/:id/pay
  */

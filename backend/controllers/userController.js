@@ -105,7 +105,7 @@ const getSingleUser = async (req, res, next) => {
  */
 const createUser = async (req, res, next) => {
     try {
-        const { name, phone, password } = req.body;
+        const { name, phone, password, role } = req.body;
 
         // ── Validation ──
         if (!name || !phone || !password) {
@@ -134,7 +134,7 @@ const createUser = async (req, res, next) => {
             name,
             phone,
             password:     hashedPassword,
-            role:         'customer',
+            role:         role || 'staff', // use provided role, default to 'staff' (not customer)
             authProvider: 'internal', // signals: created by admin, no Firebase
             isActive:     true,
         });

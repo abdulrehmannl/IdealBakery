@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
-import { Search, Package, Truck, CheckCircle, Clock, ChevronRight, MapPin } from 'lucide-react';
+import { Search, Package, Truck, CheckCircle, Clock, ChevronRight, MapPin, X } from 'lucide-react';
 
 /**
  * OrderTrackingPage
@@ -33,10 +33,10 @@ function OrderTrackingPage() {
      * TODO: These will be driven by the Order schema's `status` field from the backend.
      */
     const allSteps = [
-        { key: 'placed',    label: 'Order Placed',      icon: Package,      description: 'We received your order.' },
-        { key: 'preparing', label: 'Being Prepared',    icon: Clock,        description: 'Our bakers are preparing your order.' },
-        { key: 'delivery',  label: 'Out for Delivery',  icon: Truck,        description: 'Your order is on its way!' },
-        { key: 'delivered', label: 'Delivered',         icon: CheckCircle,  description: 'Enjoy your order!' },
+        { key: 'placed',           label: 'Order Placed',      icon: Package,      description: 'We received your order.' },
+        { key: 'preparing',        label: 'Being Prepared',    icon: Clock,        description: 'Our bakers are preparing your order.' },
+        { key: 'out_for_delivery', label: 'Out for Delivery',  icon: Truck,        description: 'Your order is on its way!' },
+        { key: 'delivered',        label: 'Delivered',         icon: CheckCircle,  description: 'Enjoy your order!' },
     ];
 
     // ── Handle Search Submit ────────────────────────────────────
@@ -80,9 +80,19 @@ function OrderTrackingPage() {
     // ── Gets which steps are completed/active based on current status ──
     const getStepState = (stepKey) => {
         if (!trackedOrder) return 'inactive';
-        const statusOrder = ['placed', 'preparing', 'delivery', 'delivered'];
-        const currentIdx = statusOrder.indexOf(trackedOrder.currentStatus);
-        const stepIdx = statusOrder.indexOf(stepKey);
+        // Map actual backend status values to the 4 timeline steps
+        const statusToStep = {
+            'pending':           'placed',
+            'confirmed':         'placed',
+            'preparing':         'preparing',
+            'out_for_delivery':  'out_for_delivery',
+            'delivered':         'delivered',
+            'cancelled':         'placed',
+        };
+        const stepOrder = ['placed', 'preparing', 'out_for_delivery', 'delivered'];
+        const currentStep = statusToStep[trackedOrder.currentStatus?.toLowerCase()] || 'placed';
+        const currentIdx = stepOrder.indexOf(currentStep);
+        const stepIdx = stepOrder.indexOf(stepKey);
         if (stepIdx < currentIdx) return 'completed'; // steps before current
         if (stepIdx === currentIdx) return 'active';   // current step
         return 'inactive';                              // future steps
@@ -131,6 +141,7 @@ function OrderTrackingPage() {
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
                                     placeholder="03XX-XXXXXXX"
+                                    required
                                     className="w-full px-4 py-3 border border-border rounded-lg text-sm bg-secondary/30 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                                 />
                             </div>
@@ -233,6 +244,14 @@ function OrderTrackingPage() {
                                 <div>
                                     <p className="text-xs font-bold text-green-700 tracking-widest uppercase mb-0.5">Delivered</p>
                                     <p className="font-bold text-green-900 text-sm">Your order has been delivered! Thank you for ordering.</p>
+                                </div>
+                            </div>
+                        ) : trackedOrder.currentStatus === 'cancelled' ? (
+                            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+                                <X size={18} className="text-red-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-xs font-bold text-red-700 tracking-widest uppercase mb-0.5">Cancelled</p>
+                                    <p className="font-bold text-red-900 text-sm">This order has been cancelled.</p>
                                 </div>
                             </div>
                         ) : (

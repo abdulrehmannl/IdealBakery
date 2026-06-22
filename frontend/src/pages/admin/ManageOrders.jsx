@@ -9,9 +9,10 @@ import { useAuth } from '../../context/AuthContext';
  * Lets admin staff view all orders, filter by status, and update order status.
  * Route: /admin/orders
  *
- * TODO: Connect to:
+ * API:
  *   GET  /api/orders               → load all orders
  *   PUT  /api/orders/:id/status    → update status of an order
+ *   PUT  /api/orders/:id/assign    → assign delivery staff
  */
 
 
@@ -437,8 +438,4 @@ export default ManageOrders;
  * Schema fields used:
  *   customer, branch, totalAmount, status, orderType,
  *   paymentMethod, address, phone, items
- *
- * TODO: Connect to:
- *   GET /api/orders                 → load orders list
- *   PUT /api/orders/:id/status      → update order status
  */

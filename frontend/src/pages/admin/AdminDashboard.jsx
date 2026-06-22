@@ -156,7 +156,7 @@ function AdminDashboard() {
                     </div>
                     <div className="divide-y divide-border">
                         {stats.lowStock?.map((item) => (
-                            <div key={item._id} className="px-6 py-4 flex items-center justify-between opacity-50">
+                            <div key={item._id} className="px-6 py-4 flex items-center justify-between">
                                 <div>
                                     <p className="font-bold text-text-dark text-sm">{item.name}</p>
                                     <p className="text-xs text-text-light mt-0.5">{item.branch?.map(b => b.name).join(', ') || 'N/A'}</p>
@@ -180,7 +180,7 @@ function AdminDashboard() {
                     </div>
                     <div className="divide-y divide-border">
                         {stats.bestSellers?.map((product, index) => (
-                            <div key={product.name} className="px-6 py-4 flex items-center gap-4 opacity-50">
+                            <div key={product.name} className="px-6 py-4 flex items-center gap-4">
                                 <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm text-white shrink-0"
                                     style={{ backgroundColor: '#8B1A1A' }}>
                                     {index + 1}

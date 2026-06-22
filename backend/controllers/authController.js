@@ -208,10 +208,8 @@ const loginPhone = async (req, res, next) => {
             });
         }
 
-        console.log(`[loginPhone] Received phone: "${phone}"`);
 
         let user = await User.findOne({ phone }).select('+password').populate('branch', 'name');
-        console.log(`[loginPhone] User found in DB:`, user ? `Yes (ID: ${user._id})` : 'No');
 
         if (!user) {
             return res.status(401).json({
@@ -231,7 +229,6 @@ const loginPhone = async (req, res, next) => {
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
-        console.log(`[loginPhone] Password matches: ${isMatch}`);
 
         if (!isMatch) {
             return res.status(401).json({

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart2 } from 'lucide-react';
 import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
@@ -23,6 +23,20 @@ function Reports() {
   const [reportData, setReportData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [branches, setBranches] = useState([]);
+
+  // Load branches for the filter dropdown
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const res = await api.get('/api/branches');
+        if (res.data.success) setBranches(res.data.data || []);
+      } catch (err) {
+        console.error('Failed to load branches for filter:', err);
+      }
+    };
+    fetchBranches();
+  }, []);
 
   // Map API response to the format expected by the UI
   const formatReportData = (type, dataObj) => {
@@ -176,8 +190,9 @@ function Reports() {
           <select value={branch} onChange={e => setBranch(e.target.value)}
             className="px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
             <option value="All">All Branches</option>
-            <option>Branch 1</option>
-            <option>Branch 2</option>
+            {branches.map(b => (
+              <option key={b._id} value={b._id}>{b.name}</option>
+            ))}
           </select>
         </div>
         <button onClick={handleGenerate} disabled={isLoading}
