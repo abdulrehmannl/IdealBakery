@@ -104,7 +104,7 @@ const getSingleBranch = async (req, res, next) => {
  */
 const createBranch = async (req, res, next) => {
     try {
-        const { name, address, city, phone, managerName } = req.body;
+        const { name, address, city, phone, managerName, image, googleMapsLink } = req.body;
 
         // ── Step 1: Validate all required fields ──
         const missingFields = [];
@@ -140,6 +140,8 @@ const createBranch = async (req, res, next) => {
             city:        city.trim(),
             phone:       phone.trim(),
             managerName: managerName ? managerName.trim() : undefined,
+            image:       image ? image.trim() : undefined,
+            googleMapsLink: googleMapsLink ? googleMapsLink.trim() : undefined,
         });
 
         return res.status(201).json({
@@ -163,7 +165,7 @@ const createBranch = async (req, res, next) => {
  */
 const updateBranch = async (req, res, next) => {
     try {
-        const { name, address, city, phone, managerName, isActive } = req.body;
+        const { name, address, city, phone, managerName, isActive, image, googleMapsLink } = req.body;
 
         // ── Build update object — only fields that were actually sent ──
         const updateData = {};
@@ -173,6 +175,8 @@ const updateBranch = async (req, res, next) => {
         if (phone       !== undefined) updateData.phone       = phone.trim();
         if (managerName !== undefined) updateData.managerName = managerName.trim();
         if (isActive    !== undefined) updateData.isActive    = isActive;
+        if (image       !== undefined) updateData.image       = image.trim();
+        if (googleMapsLink !== undefined) updateData.googleMapsLink = googleMapsLink.trim();
 
         if (Object.keys(updateData).length === 0) {
             return res.status(400).json({

@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
     LayoutDashboard, Package, Grid, ShoppingBag, Users,
     Calendar, DollarSign, Archive, Settings, Monitor,
-    BarChart2, Clock, Receipt, Tag, MapPin, ChevronRight, X
+    BarChart2, Clock, Receipt, Tag, MapPin, ChevronRight, X, Briefcase
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -21,8 +21,8 @@ const NAV_ITEMS = [
     { label: 'Reports',       path: '/admin/reports',    Icon: BarChart2,       allowedRoles: ['admin', 'manager'] },
     { label: 'Staff Leave',   path: '/admin/leaves',     Icon: Clock,           allowedRoles: ['admin', 'manager', 'staff', 'delivery'] },
     { label: 'Expenses',      path: '/admin/expenses',   Icon: Receipt,         allowedRoles: ['admin'] },
-    { label: 'Discounts',     path: '/admin/discounts',  Icon: Tag,             allowedRoles: ['admin', 'manager'] },
     { label: 'Branches',      path: '/admin/branches',   Icon: MapPin,          allowedRoles: ['admin'] },
+    { label: 'Job Apps',      path: '/admin/jobs',       Icon: Briefcase,       allowedRoles: ['admin', 'manager'] },
 ];
 
 function AdminSidebar({ mobileOpen, setMobileOpen }) {

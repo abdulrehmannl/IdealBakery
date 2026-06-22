@@ -93,8 +93,8 @@ function Footer() {
                             <a href="/wholesale" className="hover:text-primary transition-colors underline underline-offset-4 decoration-current hover:decoration-primary whitespace-nowrap">Wholesale</a>
                         </div>
                         <div className="flex flex-col gap-2.5">
-                            <a href="/menu" className="hover:text-primary transition-colors underline underline-offset-4 decoration-current hover:decoration-primary whitespace-nowrap">Find our bread</a>
-                            <a href="/privacy" className="hover:text-primary transition-colors underline underline-offset-4 decoration-current hover:decoration-primary whitespace-nowrap">Privacy Policy</a>
+                            <a href="/find-our-bread" className="hover:text-primary transition-colors underline underline-offset-4 decoration-current hover:decoration-primary whitespace-nowrap">Find our bread</a>
+                            <a href="/privacy-policy" className="hover:text-primary transition-colors underline underline-offset-4 decoration-current hover:decoration-primary whitespace-nowrap">Privacy Policy</a>
                         </div>
                     </div>
                 </div>
@@ -150,7 +150,7 @@ function Footer() {
 
                 <div className="mt-10 mb-4 w-full text-center">
                     <p className="text-xs font-bold tracking-widest text-[#3E2723]/60 uppercase">
-                        © 2026 Grand Central Bakery. Privacy Policy
+                        © 2026 Ideal Sweets & Bakers. <a href="/privacy-policy" className="hover:text-primary underline">Privacy Policy</a>
                     </p>
                 </div>
             </div>

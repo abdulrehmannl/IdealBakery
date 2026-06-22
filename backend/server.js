@@ -75,6 +75,7 @@ const leaveRoutes = require('./routes/leaveRoutes');    // ✅ /api/leaves
 const expenseRoutes = require('./routes/expenseRoutes');  // ✅ /api/expenses
 const machineryRoutes = require('./routes/machineryRoutes');// ✅ /api/machinery
 const dashboardRoutes = require('./routes/dashboardRoutes');// ✅ /api/dashboard
+const jobRoutes = require('./routes/jobRoutes');         // ✅ /api/jobs
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 3. CREATE EXPRESS APP
@@ -192,6 +193,7 @@ app.use('/api/leaves', leaveRoutes);    // ✅
 app.use('/api/expenses',   expenseRoutes);
 app.use('/api/machinery',  machineryRoutes);
 app.use('/api/dashboard',  dashboardRoutes);// ✅
+app.use('/api/jobs',       jobRoutes);      // ✅
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 8. 404 HANDLER

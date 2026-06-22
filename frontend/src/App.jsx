@@ -26,6 +26,13 @@ import BirthdayCakesPage from './pages/special/BirthdayCakesPage';
 import GiftBoxesPage from './pages/special/GiftBoxesPage';
 import EventOrdersPage from './pages/special/EventOrdersPage';
 
+// ── Static & Public Pages ──
+import PrivacyPolicy from './pages/public/PolicyPage';
+import Contact from './pages/public/Contact';
+import Jobs from './pages/public/Jobs';
+import Wholesale from './pages/public/Wholesale';
+import FindOurBread from './pages/public/FindOurBread';
+
 // ── Admin Layout + Pages ──
 import AdminLayout from './components/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -43,6 +50,7 @@ import StaffLeave from './pages/admin/StaffLeave';
 import Expenses from './pages/admin/Expenses';
 import ManageDiscounts from './pages/admin/ManageDiscounts';
 import ManageBranches from './pages/admin/ManageBranches';
+import JobApplications from './pages/admin/JobApplications';
 
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -122,6 +130,7 @@ function AppLayout() {
           <Route path="/admin/expenses"    element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Expenses /></AdminLayout></ProtectedRoute>} />
           <Route path="/admin/discounts"   element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><ManageDiscounts /></AdminLayout></ProtectedRoute>} />
           <Route path="/admin/branches"    element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><ManageBranches /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/jobs"        element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><JobApplications /></AdminLayout></ProtectedRoute>} />
 
           {/* ── Auth Routes (no navbar/footer — handled by isAuthPage above) ── */}
           <Route path="/login"          element={<LoginPage />} />
@@ -146,6 +155,13 @@ function AppLayout() {
           <Route path="/special/birthday-cakes" element={<BirthdayCakesPage />} />
           <Route path="/special/gift-boxes"     element={<GiftBoxesPage />} />
           <Route path="/special/event-orders"   element={<EventOrdersPage />} />
+
+          {/* ── Public Information Routes ── */}
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/contact"        element={<Contact />} />
+          <Route path="/jobs"           element={<Jobs />} />
+          <Route path="/wholesale"      element={<Wholesale />} />
+          <Route path="/find-our-bread" element={<FindOurBread />} />
 
           {/* ── 404 Fallback ── */}
           <Route path="*" element={

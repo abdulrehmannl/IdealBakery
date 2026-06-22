@@ -8,7 +8,7 @@ function Branches() {
     useEffect(() => {
         const fetchBranches = async () => {
             try {
-                const res = await api.get('/api/branches');
+                const res = await api.get('/api/branches?isActive=true');
                 if (res.data.success) {
                     setBranches(res.data.branches || res.data.data);
                 }

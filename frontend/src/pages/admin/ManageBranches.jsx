@@ -83,6 +83,26 @@ function ManageBranches() {
     setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const res = await api.post('/api/products/upload-image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data.success) {
+        setForm(prev => ({ ...prev, image: res.data.url }));
+      }
+    } catch (err) {
+      console.error('Image upload failed', err);
+      alert('Failed to upload image.');
+    }
+  };
+
   // Save changes
   const saveEdit = async (e) => {
     e.preventDefault();
@@ -104,7 +124,7 @@ function ManageBranches() {
 
   const openAdd = () => {
     setEditId('new');
-    setForm({ name: '', address: '', city: 'Sahiwal', phone: '', managerName: '', isActive: true });
+    setForm({ name: '', address: '', city: 'Sahiwal', phone: '', managerName: '', image: '', googleMapsLink: '', isActive: true });
     setShowAddForm(true);
   };
 
@@ -134,11 +154,19 @@ function ManageBranches() {
               style={{ backgroundColor: '#F5F0EB' }}>
               <div>
                 <h3 className="font-heading font-bold text-lg text-text-dark">{branch.name}</h3>
-                <span className={`inline-block mt-1 text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                  branch.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
-                }`}>
-                  {branch.isActive ? 'Active' : 'Inactive'}
-                </span>
+                <div className="flex gap-2 items-center mt-1">
+                  <span className={`inline-block text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                    branch.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+                  }`}>
+                    {branch.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                  {branch.image && (
+                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 rounded-full font-bold">Has Image</span>
+                  )}
+                  {branch.googleMapsLink && (
+                    <span className="text-[10px] bg-purple-100 text-purple-700 px-2 rounded-full font-bold">Has Map Link</span>
+                  )}
+                </div>
               </div>
               {/* Edit button — opens inline form below */}
               {editId !== branch.id && (
@@ -222,8 +250,29 @@ function ManageBranches() {
                 {/* Manager Name */}
                 <div>
                   <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Manager Name</label>
-                  <input name="managerName" value={form.managerName} onChange={handleChange}
+                  <input name="managerName" value={form.managerName || ''} onChange={handleChange}
                     className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                </div>
+
+                {/* Google Maps Link */}
+                <div>
+                  <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Google Maps Link</label>
+                  <input name="googleMapsLink" value={form.googleMapsLink || ''} onChange={handleChange} placeholder="https://maps.google.com/..."
+                    className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                </div>
+
+                {/* Branch Image */}
+                <div>
+                  <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Branch Image</label>
+                  <div className="flex items-center gap-3">
+                    <input name="image" value={form.image || ''} onChange={handleChange} placeholder="Image URL (or upload below)"
+                      className="flex-1 px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                    <label className="cursor-pointer bg-secondary text-text-dark px-3 py-2.5 rounded-lg text-sm font-bold border border-border hover:bg-border transition-colors">
+                      Upload
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    </label>
+                  </div>
+                  {form.image && <img src={form.image} alt="Preview" className="mt-3 w-full h-32 object-cover rounded-lg border border-border" />}
                 </div>
 
                 {/* isActive checkbox */}
@@ -282,8 +331,25 @@ function ManageBranches() {
               </div>
               <div>
                 <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Manager Name</label>
-                <input name="managerName" value={form.managerName} onChange={handleChange}
+                <input name="managerName" value={form.managerName || ''} onChange={handleChange}
                   className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Google Maps Link</label>
+                <input name="googleMapsLink" value={form.googleMapsLink || ''} onChange={handleChange} placeholder="https://maps.google.com/..."
+                  className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-text-light mb-1 uppercase tracking-wide">Branch Image</label>
+                <div className="flex items-center gap-3">
+                  <input name="image" value={form.image || ''} onChange={handleChange} placeholder="Image URL (or upload below)"
+                    className="flex-1 px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                  <label className="cursor-pointer bg-secondary text-text-dark px-3 py-2.5 rounded-lg text-sm font-bold border border-border hover:bg-border transition-colors">
+                    Upload
+                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                  </label>
+                </div>
+                {form.image && <img src={form.image} alt="Preview" className="mt-3 w-full h-32 object-cover rounded-lg border border-border" />}
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} className="w-4 h-4 accent-primary" />
