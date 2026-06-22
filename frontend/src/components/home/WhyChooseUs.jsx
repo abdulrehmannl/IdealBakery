@@ -30,7 +30,7 @@ function WhyChooseUs() {
     ];
 
     return (
-        <section className="bg-secondary py-20 px-8 border-y-2 border-border/50">
+        <section id="about" className="bg-secondary py-20 px-8 border-y-2 border-border/50">
             <div className="max-w-7xl mx-auto">
                 <h2 className="font-heading text-4xl font-bold text-center text-text-dark">
                     Why Super Ideal?

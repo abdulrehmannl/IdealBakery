@@ -25,13 +25,15 @@ const getDashboardStats = async (req, res, next) => {
         // Low stock products
         const lowStock = await Product.find({ stock: { $lt: 10 } }).populate('branch', 'name');
 
-        // Best Sellers (Aggregated from Orders)
-        const bestSellersAgg = await Order.aggregate([
-            { $unwind: "$items" },
+        // Best Sellers (Aggregated from OrderItems)
+        const OrderItem = require('../models/OrderItem');
+        
+        const bestSellersAgg = await OrderItem.aggregate([
             { $group: { 
-                _id: "$items.product", 
-                sales: { $sum: "$items.quantity" }, 
-                revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } }
+                _id: "$product", 
+                sales: { $sum: "$quantity" }, 
+                revenue: { $sum: { $multiply: ["$price", "$quantity"] } },
+                productNameFallback: { $first: "$productName" }
             }},
             { $sort: { sales: -1 } },
             { $limit: 3 }
@@ -39,7 +41,7 @@ const getDashboardStats = async (req, res, next) => {
 
         const populatedBestSellers = await Product.populate(bestSellersAgg, { path: '_id', select: 'name' });
         const bestSellers = populatedBestSellers.map(b => ({
-            name: b._id ? b._id.name : 'Unknown Product',
+            name: b._id ? b._id.name : (b.productNameFallback || 'Unknown Product'),
             sales: b.sales,
             revenue: `Rs. ${b.revenue}`
         }));

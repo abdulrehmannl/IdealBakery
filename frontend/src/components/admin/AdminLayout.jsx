@@ -113,13 +113,20 @@ function AdminLayout({ children }) {
                             {branchName} <span role="img" aria-label="store">🏪</span>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            {/* Simple avatar circle with initial */}
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm"
-                                style={{ backgroundColor: '#8B1A1A' }}>
-                                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                        <div className="flex flex-col sm:flex-row items-center sm:gap-2">
+                            <div className="flex items-center gap-2">
+                                {/* Simple avatar circle with initial */}
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm"
+                                    style={{ backgroundColor: '#8B1A1A' }}>
+                                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                                </div>
+                                <div className="hidden sm:block">
+                                    <span className="text-sm font-semibold text-text-dark block">Hi, {user?.name?.split(' ')[0] || 'User'}</span>
+                                    <span className="text-[10px] font-bold text-text-light uppercase tracking-wider block leading-none mt-0.5">
+                                        Role: {user?.role || 'Unknown'}
+                                    </span>
+                                </div>
                             </div>
-                            <span className="text-sm font-semibold text-text-dark hidden sm:block">Hi, {user?.name?.split(' ')[0] || 'User'}</span>
                         </div>
 
                         <button 

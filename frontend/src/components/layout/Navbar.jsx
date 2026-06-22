@@ -30,7 +30,7 @@ function Navbar() {
             {/* ── Left: Navigation Links (Desktop) ── */}
             <div className="hidden md:flex flex-1 gap-6">
                 <Link to="/menu" className={navLinkClass('/menu')}>MENU</Link>
-                <Link to="/about" className="font-nav text-sm font-semibold tracking-wide text-text-dark hover:text-primary transition-colors">ABOUT</Link>
+                <a href="/#about" className="font-nav text-sm font-semibold tracking-wide text-text-dark hover:text-primary transition-colors">ABOUT</a>
                 <a href="/#branches" className="font-nav text-sm font-semibold tracking-wide text-text-dark hover:text-primary transition-colors">
                     BRANCHES
                 </a>
@@ -106,7 +106,7 @@ function Navbar() {
                     <div className="flex flex-col flex-1 p-6 gap-6 overflow-y-auto">
                         <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="font-nav text-lg font-bold text-text-dark">HOME</Link>
                         <Link to="/menu" onClick={() => setIsMobileMenuOpen(false)} className="font-nav text-lg font-bold text-primary">FULL MENU</Link>
-                        <Link to="/about" onClick={() => setIsMobileMenuOpen(false)} className="font-nav text-lg font-bold text-text-dark">ABOUT US</Link>
+                        <a href="/#about" onClick={() => setIsMobileMenuOpen(false)} className="font-nav text-lg font-bold text-text-dark">ABOUT US</a>
                         <a href="/#branches" onClick={() => setIsMobileMenuOpen(false)} className="font-nav text-lg font-bold text-text-dark">OUR BRANCHES</a>
                         <Link to="/order-tracking" onClick={() => setIsMobileMenuOpen(false)} className="font-nav text-lg font-bold text-text-dark">TRACK ORDER</Link>
                         

@@ -150,6 +150,17 @@ const adminOnly = (req, res, next) => {
     next();
 };
 
+const adminOrManager = (req, res, next) => {
+    const allowedRoles = ['admin', 'manager'];
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+        return res.status(403).json({
+            success: false,
+            message: 'Access denied. Admins or Managers only.',
+        });
+    }
+    next();
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MIDDLEWARE 3: staffOrAdmin
 // ─────────────────────────────────────────────────────────────────────────────
@@ -195,7 +206,7 @@ const staffAdminOrDelivery = (req, res, next) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS
 // ─────────────────────────────────────────────────────────────────────────────
-module.exports = { protect, optionalAuth, adminOnly, staffOrAdmin, staffAdminOrDelivery };
+module.exports = { protect, optionalAuth, adminOnly, adminOrManager, staffOrAdmin, staffAdminOrDelivery };
 
 /*
  * END OF FILE SUMMARY

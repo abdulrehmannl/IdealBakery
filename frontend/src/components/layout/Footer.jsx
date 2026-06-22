@@ -9,7 +9,8 @@ function Footer() {
             try {
                 const res = await api.get('/api/branches');
                 if (res.data.success) {
-                    setBranches(res.data.branches || res.data.data || []);
+                    const allBranches = res.data.branches || res.data.data || [];
+                    setBranches(allBranches.filter(b => b.isActive !== false));
                 }
             } catch (err) {
                 console.error('Failed to load branches:', err);
@@ -128,12 +129,12 @@ function Footer() {
             <div className="max-w-7xl mx-auto mt-16 flex flex-col items-center">
                 {/* Social media links simple icons */}
                 <div className="flex justify-center gap-6 font-bold text-[#3E2723] text-lg">
-                    <a href="https://facebook.com" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors" aria-label="Facebook">
+                    <a href="https://www.facebook.com/superidealswl/" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors" aria-label="Facebook">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
                         </svg>
                     </a>
-                    <a href="https://instagram.com" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors" aria-label="Instagram">
+                    <a href="https://www.instagram.com/superidealbakers?igsh=OWl0dnNmcjZubmY3" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors" aria-label="Instagram">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                             <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>

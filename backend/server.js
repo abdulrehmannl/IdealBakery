@@ -77,6 +77,13 @@ const machineryRoutes = require('./routes/machineryRoutes');// ✅ /api/machiner
 const dashboardRoutes = require('./routes/dashboardRoutes');// ✅ /api/dashboard
 const jobRoutes = require('./routes/jobRoutes');         // ✅ /api/jobs
 
+// New operational routes
+const recipeRoutes = require('./routes/recipeRoutes');
+const productionRoutes = require('./routes/productionRoutes');
+const wasteRoutes = require('./routes/wasteRoutes');
+const supplierRoutes = require('./routes/supplierRoutes');
+const customOrderRoutes = require('./routes/customOrderRoutes');
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 3. CREATE EXPRESS APP
 // ─────────────────────────────────────────────────────────────────────────────
@@ -194,6 +201,11 @@ app.use('/api/expenses',   expenseRoutes);
 app.use('/api/machinery',  machineryRoutes);
 app.use('/api/dashboard',  dashboardRoutes);// ✅
 app.use('/api/jobs',       jobRoutes);      // ✅
+app.use('/api/recipes',    recipeRoutes);
+app.use('/api/production', productionRoutes);
+app.use('/api/waste',      wasteRoutes);
+app.use('/api/suppliers',  supplierRoutes);
+app.use('/api/custom-orders', customOrderRoutes);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 8. 404 HANDLER

@@ -4,7 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import {
     LayoutDashboard, Package, Grid, ShoppingBag, Users,
     Calendar, DollarSign, Archive, Settings, Monitor,
-    BarChart2, Clock, Receipt, Tag, MapPin, ChevronRight, X, Briefcase
+    BarChart2, Clock, Receipt, Tag, MapPin, ChevronRight, X, Briefcase,
+    BookOpen, Factory, Trash2, ClipboardList
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -23,6 +24,11 @@ const NAV_ITEMS = [
     { label: 'Expenses',      path: '/admin/expenses',   Icon: Receipt,         allowedRoles: ['admin'] },
     { label: 'Branches',      path: '/admin/branches',   Icon: MapPin,          allowedRoles: ['admin'] },
     { label: 'Job Apps',      path: '/admin/jobs',       Icon: Briefcase,       allowedRoles: ['admin', 'manager'] },
+    { label: 'Recipes',       path: '/admin/recipes',    Icon: BookOpen,        allowedRoles: ['admin', 'manager'] },
+    { label: 'Production',    path: '/admin/production', Icon: Factory,         allowedRoles: ['admin', 'manager', 'staff'] },
+    { label: 'Waste Logs',    path: '/admin/waste',      Icon: Trash2,          allowedRoles: ['admin', 'manager'] },
+    { label: 'Suppliers',     path: '/admin/suppliers',  Icon: Users,           allowedRoles: ['admin'] },
+    { label: 'Custom Orders', path: '/admin/custom-orders', Icon: ClipboardList, allowedRoles: ['admin', 'manager'] },
 ];
 
 function AdminSidebar({ mobileOpen, setMobileOpen }) {
@@ -57,7 +63,7 @@ function AdminSidebar({ mobileOpen, setMobileOpen }) {
                         </Link>
                         <span className="inline-block mt-2 text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded"
                             style={{ backgroundColor: '#8B1A1A', color: 'white' }}>
-                            ADMIN
+                            {user?.role ? user.role.toUpperCase() : 'USER'}
                         </span>
                     </div>
                     {/* Mobile Close Button */}

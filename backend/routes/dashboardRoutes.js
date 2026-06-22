@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { protect, adminOnly } = require('../middleware/auth');
+const { protect, adminOrManager } = require('../middleware/auth');
 const { getDashboardStats } = require('../controllers/dashboardController');
 
-// All dashboard routes are admin only
-router.get('/stats', protect, adminOnly, getDashboardStats);
+// Dashboard routes allowed for admin and manager
+router.get('/stats', protect, adminOrManager, getDashboardStats);
 
 module.exports = router;

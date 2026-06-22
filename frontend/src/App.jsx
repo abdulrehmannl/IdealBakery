@@ -52,6 +52,13 @@ import ManageDiscounts from './pages/admin/ManageDiscounts';
 import ManageBranches from './pages/admin/ManageBranches';
 import JobApplications from './pages/admin/JobApplications';
 
+// ── Operational Admin Pages ──
+import ManageRecipes from './pages/admin/ManageRecipes';
+import ManageProduction from './pages/admin/ManageProduction';
+import ManageWaste from './pages/admin/ManageWaste';
+import ManageSuppliers from './pages/admin/ManageSuppliers';
+import ManageCustomOrders from './pages/admin/ManageCustomOrders';
+
 import ProtectedRoute from './components/ProtectedRoute';
 
 /**
@@ -131,6 +138,12 @@ function AppLayout() {
           <Route path="/admin/discounts"   element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><ManageDiscounts /></AdminLayout></ProtectedRoute>} />
           <Route path="/admin/branches"    element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><ManageBranches /></AdminLayout></ProtectedRoute>} />
           <Route path="/admin/jobs"        element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><JobApplications /></AdminLayout></ProtectedRoute>} />
+          
+          <Route path="/admin/recipes"     element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><ManageRecipes /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/production"  element={<ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><AdminLayout><ManageProduction /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/waste"       element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><ManageWaste /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/suppliers"   element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><ManageSuppliers /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/custom-orders" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><AdminLayout><ManageCustomOrders /></AdminLayout></ProtectedRoute>} />
 
           {/* ── Auth Routes (no navbar/footer — handled by isAuthPage above) ── */}
           <Route path="/login"          element={<LoginPage />} />
